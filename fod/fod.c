@@ -35,8 +35,9 @@
 
 #include "mg_send.h"
 
-#include "skitrack.h"
-#include "skitrack_show.h"
+#include "pointcloud.h"
+#include "physobjects.h"
+#include "graphics.h"
 
 
 #define ARG_HELP             UINT32_C(0x00000001)
@@ -87,24 +88,29 @@ int main (int argc, char const * argv[])
 
 	nng_socket sock;
 	mg_pairdial (&sock, arg_address);
-	show_init (sock);
+	graphics_init (sock);
 
 
-	struct skitrack * ski = calloc(1, sizeof (struct skitrack));
+	struct pointcloud pc;
+	memset (&pc, 0, sizeof(pc));
+	pc.n = LIDAR_WH;
+	pointcloud_allocate (&pc);
 
 
 	printf ("[INFO] Opening binary file %s to read LiDAR frames.\n", arg_filename);
 	FILE * f = fopen (arg_filename, "rb");
-	fseek (f, arg_frame * sizeof (float) * LIDAR_WH * POINT_STRIDE, SEEK_SET);
 	ASSERT_NOTNULL (f);
+	fseek (f, arg_frame * sizeof (float) * LIDAR_WH * POINT_STRIDE, SEEK_SET);
+
+
 	int a = '\n';
 	while (1)
 	{
-		ski->framenr = (float)ftell(f) / (float)(sizeof (float) * LIDAR_WH * POINT_STRIDE);
-		printf ("Framenr: %i\n", ski->framenr);
-		int r = fread (ski->x, sizeof (float) * POINT_STRIDE * LIDAR_WH, 1, f);
-		ASSERTF (r == 1, "fread %i", r);
-		skitrack_show (ski, sock);
+		pointcloud_readfile (&pc, f);
+		pointcloud_filter1 (&pc, 1);
+		graphics_draw_pointcloud (&pc, sock);
+
+
 
 		if ((arg_flags & ARG_CTRLMODE) && a == '\n')
 		{

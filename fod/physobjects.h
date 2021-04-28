@@ -13,16 +13,16 @@
 
 #define MAXOBJ 10
 
-struct objectinfo
+struct physobjects
 {
 	uint32_t count;
-	struct v3f32 x[MAXOBJ];//Position
-	struct v3f32 d[MAXOBJ];//Direction
-	struct m3f32 c[MAXOBJ];//Coveriance
-	struct m3f32 n[MAXOBJ];//Count
+	struct v3f32 x[MAXOBJ];//Positions
+	struct v3f32 d[MAXOBJ];//Directions
+	struct m3f32 c[MAXOBJ];//Coveriances
+	uint32_t n[MAXOBJ];//Counts
 };
 
-void obj_context_print (struct objectinfo * obj)
+void physobjects_print (struct physobjects * obj)
 {
 	for (uint32_t i = 0; i < obj->count; ++i)
 	{
@@ -30,7 +30,7 @@ void obj_context_print (struct objectinfo * obj)
 	}
 }
 
-void obj_context_insert (struct objectinfo * obj, struct v3f32 x[], uint32_t n)
+void physobjects_newobj (struct physobjects * obj, struct v3f32 x[], uint32_t n)
 {
 	int dim = 3;
 	int ldx = 3;
@@ -40,19 +40,3 @@ void obj_context_insert (struct objectinfo * obj, struct v3f32 x[], uint32_t n)
 	cblas_sgemm (CblasColMajor, CblasNoTrans, CblasTrans, dim, dim, n, alpha, (float const*)x, ldx, (float const*)x, ldx, beta, (float*)&c, dim);
 }
 
-
-
-
-struct skitrack
-{
-	uint32_t framenr;
-	//All points of pointcloud (x,y,z,a),(x,y,z,a)
-	struct v4f32 x[LIDAR_WH];
-};
-
-
-
-static void skitrack_process (struct skitrack * ski)
-{
-
-}

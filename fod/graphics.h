@@ -20,13 +20,12 @@
 #include "mg_send.h"
 #include "myent.h"
 
-#include "skitrack.h"
+#include "pointcloud.h"
 
-static void show_init (nng_socket sock)
+static void graphics_init (nng_socket sock)
 {
 	mg_send_add (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD);
 	mg_send_add (sock, MYENT_DRAW_LINES, MG_LINES);
-
 
 
 	{
@@ -58,13 +57,17 @@ static void show_init (nng_socket sock)
 }
 
 
-static void skitrack_show (struct skitrack * ski, nng_socket sock)
+static void graphics_draw_pointcloud (struct pointcloud * pc, nng_socket sock)
 {
 	struct csc_u8rgba pointcol[LIDAR_WH*1];
 	for (uint32_t i = 0; i < LIDAR_WH; ++i)
 	{
-		float w = ski->x[i].w;
-		ski->x[i].w = 20.0f;
+		pointcol[i].a = 0x0;
+	}
+	for (uint32_t i = 0; i < pc->n; ++i)
+	{
+		float w = pc->x[i].w;
+		pc->x[i].w = 20.0f;
 		//pointcol[i] = 0xFF000000;
 		w = CLAMP(w * 4.0f, 0.0f, 255.0f);
 		pointcol[i].r = (uint8_t)(w);
@@ -73,7 +76,7 @@ static void skitrack_show (struct skitrack * ski, nng_socket sock)
 		pointcol[i].a = 0xFF;
 	}
 
-	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, ski->x, sizeof(struct v4f32)*LIDAR_WH);
+	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, pc->x, sizeof(struct v4f32)*LIDAR_WH);
 	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, pointcol, LIDAR_WH*sizeof(uint32_t));
 }
 
