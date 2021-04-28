@@ -54,12 +54,65 @@ Frame: 206    Bad PCA plane
 Frame: 6000    Bad PCA plane
 Frame: 1500
 */
+
+
+
+
+void from_stdin (struct pointcloud * pc, nng_socket sock, FILE * f)
+{
+	while (1)
+	{
+		int r = fread (pc->x, 1, sizeof (float) * POINT_STRIDE * LIDAR_WH, f);
+		printf ("fread %i\n", r);
+		//ASSERTF (r == 1, "fread %i", r);
+		pc->n = LIDAR_WH;
+
+		//pointcloud_readfile (pc, f);
+		//pointcloud_filter1 (pc, 1);
+		graphics_draw_pointcloud (pc, sock);
+	}
+}
+
+
+
+void from_file (struct pointcloud * pc, nng_socket sock, FILE * f, uint32_t arg_flags, uint32_t arg_usleep)
+{
+	int a = '\n';
+	while (1)
+	{
+		pointcloud_readfile (pc, f);
+		pointcloud_filter1 (pc, 1);
+		graphics_draw_pointcloud (pc, sock);
+
+		if ((arg_flags & ARG_CTRLMODE) && a == '\n')
+		{
+			a = getchar();
+		}
+		if (arg_usleep)
+		{
+			usleep (arg_usleep);
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
 int main (int argc, char const * argv[])
 {
+	setbuf(stdout, NULL);
 	UNUSED (argc);
 	csc_crossos_enable_ansi_color();
-	char const * arg_filename = "../txtpoints/4/14_17_18_225279.txt";
+	//char const * arg_filename = "../txtpoints/4/14_17_18_225279.txt";
 	char const * arg_address = "tcp://localhost:9002";
+	char const * arg_filename = NULL;
+	//char const * arg_address = NULL;
 	uint32_t arg_flags = 0;
 	uint32_t arg_visualmode = 1;
 	uint32_t arg_usleep = 0;
@@ -96,31 +149,41 @@ int main (int argc, char const * argv[])
 	pc.n = LIDAR_WH;
 	pointcloud_allocate (&pc);
 
-
-	printf ("[INFO] Opening binary file %s to read LiDAR frames.\n", arg_filename);
-	FILE * f = fopen (arg_filename, "rb");
-	ASSERT_NOTNULL (f);
-	fseek (f, arg_frame * sizeof (float) * LIDAR_WH * POINT_STRIDE, SEEK_SET);
-
-
-	int a = '\n';
-	while (1)
+	FILE * f = NULL;
+	if (arg_filename)
 	{
-		pointcloud_readfile (&pc, f);
-		pointcloud_filter1 (&pc, 1);
-		graphics_draw_pointcloud (&pc, sock);
+		printf ("[INFO] Opening binary file %s to read LiDAR frames.\n", arg_filename);
+		f = fopen (arg_filename, "rb");
+		fseek (f, arg_frame * sizeof (float) * LIDAR_WH * POINT_STRIDE, SEEK_SET);
+	}
+	else
+	{
+		f = stdin;
+	}
 
+	ASSERT_NOTNULL (f);
 
-
-		if ((arg_flags & ARG_CTRLMODE) && a == '\n')
+	if (f == stdin)
+	{
+		while (1)
 		{
-			a = getchar();
-		}
-		if (arg_usleep)
-		{
-			usleep (arg_usleep);
+			from_stdin (&pc, sock, f);
 		}
 	}
+	else if (f != NULL)
+	{
+		while (1)
+		{
+			from_file (&pc, sock, f, arg_flags, arg_usleep);
+		}
+	}
+	else
+	{
+		return -1;
+	}
+
+
+
 
 	nng_close (sock);
 	return 0;
