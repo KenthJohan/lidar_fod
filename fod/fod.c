@@ -62,9 +62,9 @@ void from_stdin (struct pointcloud * pc, nng_socket sock, FILE * f)
 {
 	while (1)
 	{
-		int r = fread (pc->x, 1, sizeof (float) * POINT_STRIDE * LIDAR_WH, f);
+		int r = fread (pc->x, sizeof (float) * POINT_STRIDE * LIDAR_WH, 1, f);
 		printf ("fread %i\n", r);
-		//ASSERTF (r == 1, "fread %i", r);
+		ASSERTF (r == 1, "fread %i", r);
 		pc->n = LIDAR_WH;
 
 		//pointcloud_readfile (pc, f);

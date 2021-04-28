@@ -1,4 +1,4 @@
-gcc detection_file.c -odetection_file \
+gcc fod.c -ofod \
 -DNNG_STATIC_LIB \
 -lnng \
 -latomic \
