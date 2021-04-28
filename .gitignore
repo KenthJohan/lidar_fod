@@ -1,0 +1,8 @@
+build-*
+*.pro.user
+*.exe
+win64s/*.glfs
+win64s/*.glvs
+*.o
+*.pro.user
+*.pro.
