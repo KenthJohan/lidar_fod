@@ -12,6 +12,8 @@
 #include "mathmisc.h"
 
 
+
+
 struct pointcloud
 {
 	uint32_t framenr;
@@ -34,18 +36,10 @@ static void pointcloud_readfile (struct pointcloud * pc, FILE * f)
 	pc->n = LIDAR_WH;
 }
 
+
 static void pointcloud_filter1 (struct pointcloud * pc, float d2)
 {
-	uint32_t j = 0;
-	for (uint32_t i = 0; i < pc->n; ++i)
-	{
-		if (v4f32_norm2 (pc->x + i) > d2)
-		{
-			pc->x[j] = pc->x[i];
-			j++;
-		}
-	}
-	pc->n = j;
+	v4f32_filter_norm2_gt (pc->x, &pc->n, d2);
 	printf ("Number of points: %i\n", pc->n);
 }
 

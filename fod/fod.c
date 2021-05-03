@@ -58,7 +58,7 @@ Frame: 1500
 
 
 
-void from_stdin (struct pointcloud * pc, nng_socket sock, FILE * f)
+void loop_stdin (struct pointcloud * pc, nng_socket sock, FILE * f)
 {
 	while (1)
 	{
@@ -66,25 +66,23 @@ void from_stdin (struct pointcloud * pc, nng_socket sock, FILE * f)
 		printf ("fread %i\n", r);
 		ASSERTF (r == 1, "fread %i", r);
 		pc->n = LIDAR_WH;
-
 		//pointcloud_readfile (pc, f);
-		//pointcloud_filter1 (pc, 1);
+		pointcloud_filter1 (pc, 1.0f);
 		graphics_draw_pointcloud (pc, sock);
 	}
 }
 
 
 
-void from_file (struct pointcloud * pc, nng_socket sock, FILE * f, uint32_t arg_flags, uint32_t arg_usleep)
+void loop_file (struct pointcloud * pc, nng_socket sock, FILE * f, uint32_t arg_flags, uint32_t arg_usleep)
 {
 	int a = '\n';
 	while (1)
 	{
 		pointcloud_readfile (pc, f);
-		pointcloud_filter1 (pc, 1);
+		pointcloud_filter1 (pc, 1.0f);
 		graphics_draw_pointcloud (pc, sock);
-
-		if ((arg_flags & ARG_CTRLMODE) && a == '\n')
+		if (arg_flags & ARG_CTRLMODE)
 		{
 			a = getchar();
 		}
@@ -139,6 +137,8 @@ int main (int argc, char const * argv[])
 		return 0;
 	}
 
+
+	printf ("[INFO] Init remote graphic server %s\n", arg_address);
 	nng_socket sock;
 	mg_pairdial (&sock, arg_address);
 	graphics_init (sock);
@@ -165,17 +165,13 @@ int main (int argc, char const * argv[])
 
 	if (f == stdin)
 	{
-		while (1)
-		{
-			from_stdin (&pc, sock, f);
-		}
+		printf ("[INFO] Reading from STDIN\n");
+		loop_stdin (&pc, sock, f);
 	}
 	else if (f != NULL)
 	{
-		while (1)
-		{
-			from_file (&pc, sock, f, arg_flags, arg_usleep);
-		}
+		printf ("[INFO] Reading from file %s\n", arg_filename);
+		loop_file (&pc, sock, f, arg_flags, arg_usleep);
 	}
 	else
 	{
