@@ -32,6 +32,7 @@ void physobjects_print (struct physobjects * obj)
 
 void physobjects_newobj (struct physobjects * obj, struct v3f32 x[], uint32_t n)
 {
+	ASSERT_PARAM_NOTNULL (obj);
 	int dim = 3;
 	int ldx = 3;
 	float alpha = 1.0f;

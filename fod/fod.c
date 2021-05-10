@@ -24,6 +24,7 @@
 #include "csc/csc_m3f32_print.h"
 #include "csc/csc_m4f32.h"
 #include "csc/csc_v3f32.h"
+#include "csc/csc_v3f32_print.h"
 #include "csc/csc_v4f32.h"
 #include "csc/csc_qf32.h"
 #include "csc/csc_filecopy.h"
@@ -56,6 +57,15 @@ Frame: 1500
 */
 
 
+void loop1(struct pointcloud * pc, nng_socket sock)
+{
+	pointcloud_process (pc);
+	graphics_draw_pointcloud (pc, sock);
+	graphics_draw_pca (pc, sock);
+	printf ("Number of points: %i\n", pc->n);
+	csc_v3f32_print_rgb (stdout, &pc->o);
+}
+
 
 
 void loop_stdin (struct pointcloud * pc, nng_socket sock, FILE * f)
@@ -63,12 +73,11 @@ void loop_stdin (struct pointcloud * pc, nng_socket sock, FILE * f)
 	while (1)
 	{
 		int r = fread (pc->x, sizeof (float) * POINT_STRIDE * LIDAR_WH, 1, f);
-		printf ("fread %i\n", r);
+		//printf ("fread %i\n", r);
 		ASSERTF (r == 1, "fread %i", r);
 		pc->n = LIDAR_WH;
 		//pointcloud_readfile (pc, f);
-		pointcloud_filter1 (pc, 1.0f);
-		graphics_draw_pointcloud (pc, sock);
+		loop1 (pc, sock);
 	}
 }
 
@@ -80,8 +89,7 @@ void loop_file (struct pointcloud * pc, nng_socket sock, FILE * f, uint32_t arg_
 	while (1)
 	{
 		pointcloud_readfile (pc, f);
-		pointcloud_filter1 (pc, 1.0f);
-		graphics_draw_pointcloud (pc, sock);
+		loop1 (pc, sock);
 		if (arg_flags & ARG_CTRLMODE)
 		{
 			a = getchar();
@@ -89,6 +97,10 @@ void loop_file (struct pointcloud * pc, nng_socket sock, FILE * f, uint32_t arg_
 		if (arg_usleep)
 		{
 			usleep (arg_usleep);
+		}
+		if (a == 'q')
+		{
+			return;
 		}
 	}
 }

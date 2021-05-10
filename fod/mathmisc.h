@@ -39,3 +39,8 @@ static void v4f32_filter_norm2_gt (struct v4f32 x[], uint32_t * n, float d2)
 	}
 	(*n) = j;
 }
+
+
+
+
+
