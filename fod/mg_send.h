@@ -1,7 +1,7 @@
 #pragma once
 
-#include "csc/csc_debug.h"
-#include "csc/csc_debug_nng.h"
+#include "csc_debug.h"
+#include "csc_debug_nng.h"
 
 #include <nng/nng.h>
 #include <nng/protocol/pair0/pair.h>

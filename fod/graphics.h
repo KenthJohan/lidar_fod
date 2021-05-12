@@ -2,17 +2,18 @@
 
 #include <stdio.h>
 
-#include "csc/csc_debug_nng.h"
-#include "csc/csc_math.h"
-#include "csc/csc_linmat.h"
-#include "csc/csc_m3f32.h"
-#include "csc/csc_m3f32_print.h"
-#include "csc/csc_v3f32_print.h"
-#include "csc/csc_vu32.h"
-#include "csc/csc_rgb.h"
+#include "csc_debug_nng.h"
+#include "csc_math.h"
+#include "csc_linmat.h"
+#include "csc_m3f32.h"
+#include "csc_m3f32_print.h"
+#include "csc_v3f32_print.h"
+#include "csc_vu32.h"
+#include "csc_rgb.h"
 
 #include "../shared/shared.h"
-#include "points_read.h"
+#include "../shared/ce30.h"
+
 #include "mathmisc.h"
 
 #include "mg_attr.h"
@@ -29,18 +30,18 @@ static void graphics_init (nng_socket sock)
 
 
 	{
-		component_count c = LIDAR_WH*1;
+		component_count c = CE30_WH*1;
 		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_COUNT, &c, sizeof(component_count));
 	}
 
 
 	{
 		//The color of each point. This is only used for visualization.
-		uint32_t pointcol[LIDAR_WH*1];
-		vu32_set1 (LIDAR_WH*1, pointcol+LIDAR_WH*0, 0xFFFFFF00);
+		uint32_t pointcol[CE30_WH*1];
+		vu32_set1 (CE30_WH*1, pointcol+CE30_WH*0, 0xFFFFFF00);
 		//vu32_set1 (LIDAR_WH*1, pointcol+LIDAR_WH*1, 0xFFFFFF88);
 		//vu32_set1 (LIDAR_WH*1, pointcol+LIDAR_WH*2, 0xFF88FFFF);
-		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, pointcol, LIDAR_WH*sizeof(uint32_t)*1);
+		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, pointcol, CE30_WH*sizeof(uint32_t)*1);
 	}
 
 	{
@@ -59,9 +60,8 @@ static void graphics_init (nng_socket sock)
 
 static void graphics_draw_pointcloud (struct pointcloud * pc, nng_socket sock)
 {
-	struct v4f32 * x = pc->x1;
-	struct csc_u8rgba pointcol[LIDAR_WH*1];
-	for (uint32_t i = 0; i < LIDAR_WH; ++i)
+	struct csc_u8rgba pointcol[CE30_WH*1];
+	for (uint32_t i = 0; i < CE30_WH; ++i)
 	{
 		pointcol[i].a = 0x00;
 	}
@@ -69,8 +69,7 @@ static void graphics_draw_pointcloud (struct pointcloud * pc, nng_socket sock)
 	//Set color
 	for (uint32_t i = 0; i < pc->n; ++i)
 	{
-		float w = x[i].w;
-		w = CLAMP(w * 4.0f, 0.0f, 255.0f);
+		float w = CLAMP(pc->a[i] * 4.0f, 0.0f, 255.0f);
 		pointcol[i].r = (uint8_t)(w);
 		pointcol[i].g = (uint8_t)(w);
 		pointcol[i].b = (uint8_t)(w);
@@ -79,17 +78,27 @@ static void graphics_draw_pointcloud (struct pointcloud * pc, nng_socket sock)
 		//pointcol[i] = c;
 	}
 
-	//Set point size
-	for (uint32_t i = 0; i < pc->n; ++i)
-	{
-		x[i].w = 20.0f;
-	}
+
 
 
 	//mg_send_set (sock, MYENT_DRAW_LINES, MG_POINTCLOUD_POS, x, sizeof(struct v4f32)*LIDAR_WH);
+	struct v4f32 x[CE30_WH];
+	//Set point size
+	for (uint32_t i = 0; i < CE30_WH; ++i)
+	{
+		x[i].w = 0.0f;
+	}
+	for (uint32_t i = 0; i < pc->n; ++i)
+	{
+		x[i].w = 20.0f;
+		x[i].x = pc->x[i].x;
+		x[i].y = pc->x[i].y;
+		x[i].z = pc->x[i].z;
+	}
 
-	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, x, sizeof(struct v4f32)*LIDAR_WH);
-	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, pointcol, LIDAR_WH*sizeof(uint32_t));
+
+	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, x, sizeof(struct v4f32)*CE30_WH);
+	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, pointcol, sizeof(uint32_t)*CE30_WH);
 }
 
 
@@ -108,13 +117,13 @@ static void graphics_draw_pca (struct pointcloud * pc, nng_socket sock)
 	v4f32_set_xyzw (pos + 5, e[2].x, e[2].y, e[2].z, 0.0f);
 
 	//https://math.stackexchange.com/questions/1447730/drawing-ellipse-from-eigenvalue-eigenvector
-	v4f32_mul (pos + 1, pos + 1, sqrtf(pc->w.x));
-	v4f32_mul (pos + 3, pos + 3, sqrtf(pc->w.y));
-	v4f32_mul (pos + 5, pos + 5, sqrtf(pc->w.z));
+	v4f32_mul (pos + 1, pos + 1, sqrtf(pc->w[0]));
+	v4f32_mul (pos + 3, pos + 3, sqrtf(pc->w[1]));
+	v4f32_mul (pos + 5, pos + 5, sqrtf(pc->w[2]));
 
-	struct csc_u8rgba col_x = {0xFF, 0x55, 0x55, 0xFF};
-	struct csc_u8rgba col_y = {0x55, 0xFF, 0x55, 0xFF};
-	struct csc_u8rgba col_z = {0x55, 0x55, 0xFF, 0xFF};
+	struct csc_u8rgba col_x = {0xFF, 0xAA, 0xAA, 0xFF};
+	struct csc_u8rgba col_y = {0xAA, 0xFF, 0xAA, 0xFF};
+	struct csc_u8rgba col_z = {0xAA, 0xAA, 0xFF, 0xFF};
 	struct csc_u8rgba col[6] = {col_x,col_x, col_y,col_y, col_z,col_z};
 
 	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, pos, sizeof(pos));

@@ -15,24 +15,25 @@
 #include <nng/protocol/pair0/pair.h>
 #include <nng/supplemental/util/platform.h>
 
-#include "csc/csc_debug_nng.h"
-#include "csc/csc_crossos.h"
-#include "csc/csc_malloc_file.h"
-#include "csc/csc_math.h"
-#include "csc/csc_linmat.h"
-#include "csc/csc_m3f32.h"
-#include "csc/csc_m3f32_print.h"
-#include "csc/csc_m4f32.h"
-#include "csc/csc_v3f32.h"
-#include "csc/csc_v3f32_print.h"
-#include "csc/csc_v4f32.h"
-#include "csc/csc_qf32.h"
-#include "csc/csc_filecopy.h"
-#include "csc/csc_argv.h"
-#include "csc/csc_debug.h"
+#include "csc_debug_nng.h"
+#include "csc_crossos.h"
+#include "csc_malloc_file.h"
+#include "csc_math.h"
+#include "csc_linmat.h"
+#include "csc_m3f32.h"
+#include "csc_m3f32_print.h"
+#include "csc_m4f32.h"
+#include "csc_v3f32.h"
+#include "csc_v3f32_print.h"
+#include "csc_v4f32.h"
+#include "csc_qf32.h"
+#include "csc_filecopy.h"
+#include "csc_argv.h"
+#include "csc_debug.h"
 
 #include "../shared/shared.h"
 #include "../shared/log.h"
+#include "../shared/ce30.h"
 
 #include "mg_send.h"
 
@@ -72,10 +73,7 @@ void loop_stdin (struct pointcloud * pc, nng_socket sock, FILE * f)
 {
 	while (1)
 	{
-		int r = fread (pc->x, sizeof (float) * POINT_STRIDE * LIDAR_WH, 1, f);
-		//printf ("fread %i\n", r);
-		ASSERTF (r == 1, "fread %i", r);
-		pc->n = LIDAR_WH;
+		pc->n = ce30_fread (pc->x, pc->a, f);
 		//pointcloud_readfile (pc, f);
 		loop1 (pc, sock);
 	}
@@ -88,7 +86,8 @@ void loop_file (struct pointcloud * pc, nng_socket sock, FILE * f, uint32_t arg_
 	int a = '\n';
 	while (1)
 	{
-		pointcloud_readfile (pc, f);
+		printf ("Frame %i\n", ce30_ftell(f));
+		pc->n = ce30_fread (pc->x, pc->a, f);
 		loop1 (pc, sock);
 		if (arg_flags & ARG_CTRLMODE)
 		{
@@ -119,7 +118,6 @@ int main (int argc, char const * argv[])
 	setbuf(stdout, NULL);
 	UNUSED (argc);
 	csc_crossos_enable_ansi_color();
-	//char const * arg_filename = "../txtpoints/4/14_17_18_225279.txt";
 	char const * arg_address = "tcp://localhost:9002";
 	char const * arg_filename = NULL;
 	//char const * arg_address = NULL;
@@ -158,7 +156,7 @@ int main (int argc, char const * argv[])
 
 	struct pointcloud pc;
 	memset (&pc, 0, sizeof(pc));
-	pc.n = LIDAR_WH;
+	pc.capacity = CE30_WH;
 	pointcloud_allocate (&pc);
 
 	FILE * f = NULL;
@@ -166,7 +164,7 @@ int main (int argc, char const * argv[])
 	{
 		printf ("[INFO] Opening binary file %s to read LiDAR frames.\n", arg_filename);
 		f = fopen (arg_filename, "rb");
-		fseek (f, arg_frame * sizeof (float) * LIDAR_WH * POINT_STRIDE, SEEK_SET);
+		ce30_seek_set (f, arg_frame);
 	}
 	else
 	{

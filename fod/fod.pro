@@ -6,6 +6,7 @@ CONFIG += static
 
 DEFINES += USING_QT_CREATOR
 DEFINES += NNG_STATIC_LIB
+INCLUDEPATH += ../shared/csc
 
 QMAKE_CFLAGS += -Wno-unused-function
 
@@ -17,17 +18,18 @@ HEADERS += pointcloud.h
 HEADERS += graphics.h
 HEADERS += mg_comp.h
 HEADERS += mg_attr.h
+HEADERS += ../shared/ce30.h
 HEADERS += ../shared/shared.h
 HEADERS += ../shared/log.h
 
-HEADERS += csc/csc_math.h
-HEADERS += csc/csc_linmat.h
-HEADERS += csc/csc_m3f32.h
-HEADERS += csc/csc_m3f32_print.h
-HEADERS += csc/csc_m4f32.h
-HEADERS += csc/csc_v3f32.h
-HEADERS += csc/csc_v3f32_print.h
-HEADERS += csc/csc_qf32.h
+HEADERS += csc_math.h
+HEADERS += csc_linmat.h
+HEADERS += csc_m3f32.h
+HEADERS += csc_m3f32_print.h
+HEADERS += csc_m4f32.h
+HEADERS += csc_v3f32.h
+HEADERS += csc_v3f32_print.h
+HEADERS += csc_qf32.h
 
 
 INCLUDEPATH += C:/msys64/mingw64/include

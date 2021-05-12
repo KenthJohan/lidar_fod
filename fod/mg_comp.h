@@ -1,7 +1,7 @@
 #pragma once
 
-#include "csc/csc_math.h"
-#include "csc/csc_qf32.h"
+#include "csc_math.h"
+#include "csc_qf32.h"
 
 typedef uint32_t component_tbo;
 typedef uint32_t component_color;

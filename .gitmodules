@@ -1,3 +1,3 @@
-[submodule "fod/csc"]
-	path = fod/csc
+[submodule "shared/csc"]
+	path = shared/csc
 	url = https://github.com/KenthJohan/csc

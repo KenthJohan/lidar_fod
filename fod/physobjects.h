@@ -1,11 +1,11 @@
 #pragma once
 
 #include <stdint.h>
-#include "csc/csc_debug.h"
-#include "csc/csc_m3f32.h"
-#include "csc/csc_m3f32_print.h"
-#include "csc/csc_v3f32.h"
-#include "csc/csc_v3f32_print.h"
+#include "csc_debug.h"
+#include "csc_m3f32.h"
+#include "csc_m3f32_print.h"
+#include "csc_v3f32.h"
+#include "csc_v3f32_print.h"
 
 #include "../shared/shared.h"
 #include "../shared/log.h"

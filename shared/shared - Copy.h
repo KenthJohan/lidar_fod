@@ -19,7 +19,13 @@
 #define POINT_STRIDE 4
 #define POINT_DIM 3
 
-
+#define LIDAR_W 320
+#define LIDAR_H 20
+#define LIDAR_WH (LIDAR_W*LIDAR_H)
+#define LIDAR_FPS 30
+#define LIDAR_FOV_W 60
+#define LIDAR_FOV_H 4
+#define LIDAR_INDEX(x,y) ((x)*LIDAR_H + (y))
 
 #define VOXEL_XN 60
 #define VOXEL_YN 30
