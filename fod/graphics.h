@@ -90,7 +90,7 @@ static void graphics_draw_pointcloud (struct pointcloud * pc, nng_socket sock)
 	}
 	for (uint32_t i = 0; i < pc->n; ++i)
 	{
-		x[i].w = 20.0f;
+		x[i].w = 10.0f;
 		x[i].x = pc->x[i].x;
 		x[i].y = pc->x[i].y;
 		x[i].z = pc->x[i].z;
