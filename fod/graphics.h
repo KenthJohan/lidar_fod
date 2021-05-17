@@ -46,7 +46,7 @@ static void graphics_init (nng_socket sock)
 
 	{
 		//The color of each point. This is only used for visualization.
-		struct v4f32 lines[6];
+		v4f32 lines[6];
 		uint32_t col[6];
 		component_count c = 6;
 		vu32_set1 (6, col, 0xFFFFFFFF);
@@ -60,7 +60,7 @@ static void graphics_init (nng_socket sock)
 
 static void graphics_draw_pointcloud (struct pointcloud * pc, nng_socket sock)
 {
-	struct csc_u8rgba pointcol[CE30_WH*1];
+	u8rgba pointcol[CE30_WH*1];
 	for (uint32_t i = 0; i < CE30_WH; ++i)
 	{
 		pointcol[i].a = 0x00;
@@ -82,7 +82,7 @@ static void graphics_draw_pointcloud (struct pointcloud * pc, nng_socket sock)
 
 
 	//mg_send_set (sock, MYENT_DRAW_LINES, MG_POINTCLOUD_POS, x, sizeof(struct v4f32)*LIDAR_WH);
-	struct v4f32 x[CE30_WH];
+	v4f32 x[CE30_WH];
 	//Set point size
 	for (uint32_t i = 0; i < CE30_WH; ++i)
 	{
@@ -91,13 +91,13 @@ static void graphics_draw_pointcloud (struct pointcloud * pc, nng_socket sock)
 	for (uint32_t i = 0; i < pc->n; ++i)
 	{
 		x[i].w = 10.0f;
-		x[i].x = pc->x[i].x;
-		x[i].y = pc->x[i].y;
-		x[i].z = pc->x[i].z;
+		x[i].x = pc->x1[i].x;
+		x[i].y = pc->x1[i].y;
+		x[i].z = pc->x1[i].z;
 	}
 
 
-	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, x, sizeof(struct v4f32)*CE30_WH);
+	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, x, sizeof(v4f32)*CE30_WH);
 	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, pointcol, sizeof(uint32_t)*CE30_WH);
 }
 
@@ -106,8 +106,8 @@ static void graphics_draw_pointcloud (struct pointcloud * pc, nng_socket sock)
 
 static void graphics_draw_pca (struct pointcloud * pc, nng_socket sock)
 {
-	struct v3f32 const * e = pc->e; //Rename
-	struct v4f32 pos[6];
+	v3f32 const * e = pc->e; //Rename
+	v4f32 pos[6];
 	v4f32_set1     (pos + 0, 0.0f);
 	v4f32_set1     (pos + 2, 0.0f);
 	v4f32_set1     (pos + 4, 0.0f);
@@ -121,14 +121,35 @@ static void graphics_draw_pca (struct pointcloud * pc, nng_socket sock)
 	v4f32_mul (pos + 3, pos + 3, sqrtf(pc->w[1]));
 	v4f32_mul (pos + 5, pos + 5, sqrtf(pc->w[2]));
 
-	struct csc_u8rgba col_x = {0xFF, 0xAA, 0xAA, 0xFF};
-	struct csc_u8rgba col_y = {0xAA, 0xFF, 0xAA, 0xFF};
-	struct csc_u8rgba col_z = {0xAA, 0xAA, 0xFF, 0xFF};
-	struct csc_u8rgba col[6] = {col_x,col_x, col_y,col_y, col_z,col_z};
+	u8rgba col_x = {0xFF, 0xAA, 0xAA, 0xFF};
+	u8rgba col_y = {0xAA, 0xFF, 0xAA, 0xFF};
+	u8rgba col_z = {0xAA, 0xAA, 0xFF, 0xFF};
+	u8rgba col[6] = {col_x,col_x, col_y,col_y, col_z,col_z};
 
 	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, pos, sizeof(pos));
 	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_COL, col, sizeof(col));
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

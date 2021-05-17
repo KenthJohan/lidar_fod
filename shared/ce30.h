@@ -14,7 +14,7 @@
 #define CE30_XYZW_FRAME_SIZE (sizeof(float)*4*CE30_WH)
 
 
-static uint32_t ce30_filter1 (struct v4f32 x[], struct v3f32 y[], float w[], float d2)
+static uint32_t ce30_filter1 (v4f32 x[], v3f32 y[], float w[], float d2)
 {
 	ASSERT_PARAM_NOTNULL(x);
 	ASSERT_PARAM_NOTNULL(y);
@@ -22,7 +22,7 @@ static uint32_t ce30_filter1 (struct v4f32 x[], struct v3f32 y[], float w[], flo
 	uint32_t j = 0;
 	for (uint32_t i = 0; i < CE30_WH; ++i)
 	{
-		struct v3f32 xi = {x[i].x, x[i].y, x[i].z};
+		v3f32 xi = {{x[i].x, x[i].y, x[i].z}};
 		if (v3f32_norm2 (&xi) > d2)
 		{
 			y[j] = xi;
@@ -34,12 +34,12 @@ static uint32_t ce30_filter1 (struct v4f32 x[], struct v3f32 y[], float w[], flo
 }
 
 
-static uint32_t ce30_fread (struct v3f32 y[], float w[], FILE * f)
+static uint32_t ce30_fread (v3f32 y[], float w[], FILE * f)
 {
 	ASSERT_PARAM_NOTNULL(y);
 	ASSERT_PARAM_NOTNULL(w);
 	ASSERT_PARAM_NOTNULL(f);
-	struct v4f32 x[CE30_WH];
+	v4f32 x[CE30_WH];
 	//pc->framenr = (float)ftell(f) / (float)(sizeof (float) * LIDAR_WH * POINT_STRIDE);
 	//printf ("Framenr: %i\n", pc->framenr);
 	//sizeof (float) * POINT_STRIDE * LIDAR_WH

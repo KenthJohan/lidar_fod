@@ -16,9 +16,9 @@
 struct physobjects
 {
 	uint32_t count;
-	struct v3f32 x[MAXOBJ];//Positions
-	struct v3f32 d[MAXOBJ];//Directions
-	struct m3f32 c[MAXOBJ];//Coveriances
+	v3f32 x[MAXOBJ];//Positions
+	v3f32 d[MAXOBJ];//Directions
+	m3f32 c[MAXOBJ];//Coveriances
 	uint32_t n[MAXOBJ];//Counts
 };
 
@@ -30,14 +30,14 @@ void physobjects_print (struct physobjects * obj)
 	}
 }
 
-void physobjects_newobj (struct physobjects * obj, struct v3f32 x[], uint32_t n)
+void physobjects_newobj (struct physobjects * obj, v3f32 x[], uint32_t n)
 {
 	ASSERT_PARAM_NOTNULL (obj);
 	int dim = 3;
 	int ldx = 3;
 	float alpha = 1.0f;
 	float beta = 0.0f;
-	struct m3f32 c;
+	m3f32 c;
 	cblas_sgemm (CblasColMajor, CblasNoTrans, CblasTrans, dim, dim, n, alpha, (float const*)x, ldx, (float const*)x, ldx, beta, (float*)&c, dim);
 }
 

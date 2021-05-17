@@ -40,6 +40,9 @@
 #include "pointcloud.h"
 #include "physobjects.h"
 #include "graphics.h"
+#include "sys_draw.h"
+
+#include <flecs.h>
 
 
 #define ARG_HELP             UINT32_C(0x00000001)
@@ -57,14 +60,16 @@ Frame: 6000    Bad PCA plane
 Frame: 1500
 */
 
+ecs_world_t * world = NULL;
 
 void loop1(struct pointcloud * pc, nng_socket sock)
 {
 	pointcloud_process (pc);
 	graphics_draw_pointcloud (pc, sock);
-	graphics_draw_pca (pc, sock);
+	//graphics_draw_pca (pc, sock);
+	ecs_progress (world, 0);
 	printf ("Number of points: %i\n", pc->n);
-	csc_v3f32_print_rgb (stdout, &pc->o);
+	//csc_v3f32_print_rgb (stdout, &pc->o);
 }
 
 
@@ -106,7 +111,14 @@ void loop_file (struct pointcloud * pc, nng_socket sock, FILE * f, uint32_t arg_
 
 
 
-
+typedef m3f32 Rotation;
+typedef v3f32 Position;
+typedef v3f32 Velocity;
+typedef float Length;
+typedef struct GraphicServer
+{
+	nng_socket socket;
+} GraphicServer;
 
 
 
@@ -118,6 +130,20 @@ int main (int argc, char const * argv[])
 	setbuf(stdout, NULL);
 	UNUSED (argc);
 	csc_crossos_enable_ansi_color();
+
+
+
+	world = ecs_init();
+	ECS_COMPONENT(world, Rotation);
+	ECS_COMPONENT(world, Position);
+	ECS_COMPONENT(world, Velocity);
+	ECS_COMPONENT(world, Length);
+	ECS_COMPONENT(world, GraphicServer);
+	ECS_SYSTEM (world, sys_draw, EcsOnUpdate, [in] Rotation, [in] Position, [in] Length, [in] $GraphicServer);
+
+
+
+
 	char const * arg_address = "tcp://localhost:9002";
 	char const * arg_filename = NULL;
 	//char const * arg_address = NULL;
@@ -148,11 +174,20 @@ int main (int argc, char const * argv[])
 	}
 
 
+
 	printf ("[INFO] Init remote graphic server %s\n", arg_address);
 	nng_socket sock;
 	mg_pairdial (&sock, arg_address);
 	graphics_init (sock);
+	ecs_singleton_set (world, GraphicServer, {sock});
 
+	ecs_entity_t e = ecs_new(world, 0);
+	//ecs_add (world, e, Position);
+	//ecs_add (world, e, Rotation);
+	//ecs_add (world, e, Length);
+	ecs_set (world, e, Position, {{1.0f, 1.0f, 1.0f}});
+	ecs_set (world, e, Rotation, {{0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f}});
+	ecs_set (world, e, Length, {0.5f});
 
 	struct pointcloud pc;
 	memset (&pc, 0, sizeof(pc));
@@ -190,7 +225,7 @@ int main (int argc, char const * argv[])
 
 
 
-
+	ecs_fini (world);
 	nng_close (sock);
 	return 0;
 }
