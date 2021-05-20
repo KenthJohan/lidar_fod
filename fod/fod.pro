@@ -8,9 +8,9 @@ DEFINES += USING_QT_CREATOR
 DEFINES += NNG_STATIC_LIB
 
 QMAKE_CFLAGS += -Wno-unused-function
+QMAKE_CFLAGS += -Wno-unused-parameter
 
 SOURCES += fod.c
-SOURCES += ../shared/flecs/flecs.c
 
 HEADERS += calculation.h
 HEADERS += myent.h
@@ -20,7 +20,6 @@ HEADERS += graphics.h
 HEADERS += mg_comp.h
 HEADERS += mg_attr.h
 HEADERS += mg_send.h
-HEADERS += sys_draw.h
 HEADERS += ../shared/ce30.h
 HEADERS += ../shared/shared.h
 HEADERS += ../shared/log.h
@@ -36,7 +35,6 @@ HEADERS += csc_qf32.h
 
 
 INCLUDEPATH += ../shared/csc
-INCLUDEPATH += ../shared/flecs
 INCLUDEPATH += C:/msys64/mingw64/include
 
 LIBS += -LC:/msys64/mingw64/lib

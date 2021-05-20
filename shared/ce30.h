@@ -50,7 +50,7 @@ static uint32_t ce30_fread (v3f32 y[], float w[], FILE * f)
 }
 
 
-static uint32_t ce30_seek_set(FILE * f, long frame)
+static void ce30_seek_set(FILE * f, long frame)
 {
 	fseek (f, frame * CE30_XYZW_FRAME_SIZE, SEEK_SET);
 }

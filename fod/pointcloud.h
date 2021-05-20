@@ -17,7 +17,7 @@ static void pointcloud_centering (v3f32 const x[], v3f32 y[], uint32_t n, float 
 {
 	ASSERT (n > 0); //Divide by zero protection
 	//Move the center of all points to origin:
-	v3f32 mean = {0.0f, 0.0f, 0.0f};
+	v3f32 mean = {{0.0f, 0.0f, 0.0f}};
 	for (uint32_t i = 0; i < n; ++i)
 	{
 		mean.x += x[i].x;
@@ -115,7 +115,7 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
 }
 
 
-static uint32_t pointcloud_box_intersect (v4f32 const x[], v4f32 const y[], uint32_t n)
+static void pointcloud_box_intersect (v4f32 const x[], v4f32 const y[], uint32_t n)
 {
 	for (uint32_t i = 0; i < n; ++i)
 	{

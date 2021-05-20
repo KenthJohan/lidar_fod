@@ -121,9 +121,9 @@ static void graphics_draw_pca (struct pointcloud * pc, nng_socket sock)
 	v4f32_mul (pos + 3, pos + 3, sqrtf(pc->w[1]));
 	v4f32_mul (pos + 5, pos + 5, sqrtf(pc->w[2]));
 
-	u8rgba col_x = {0xFF, 0xAA, 0xAA, 0xFF};
-	u8rgba col_y = {0xAA, 0xFF, 0xAA, 0xFF};
-	u8rgba col_z = {0xAA, 0xAA, 0xFF, 0xFF};
+	u8rgba col_x = {{0xFF, 0xAA, 0xAA, 0xFF}};
+	u8rgba col_y = {{0xAA, 0xFF, 0xAA, 0xFF}};
+	u8rgba col_z = {{0xAA, 0xAA, 0xFF, 0xFF}};
 	u8rgba col[6] = {col_x,col_x, col_y,col_y, col_z,col_z};
 
 	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, pos, sizeof(pos));

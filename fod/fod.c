@@ -40,9 +40,7 @@
 #include "pointcloud.h"
 #include "physobjects.h"
 #include "graphics.h"
-#include "sys_draw.h"
 
-#include <flecs.h>
 
 
 #define ARG_HELP             UINT32_C(0x00000001)
@@ -50,6 +48,16 @@
 #define ARG_STDIN            UINT32_C(0x00000010)
 #define ARG_LEGACY_FILENAME  UINT32_C(0x00000100)
 #define ARG_CTRLMODE         UINT32_C(0x00001000)
+
+struct
+{
+	char const * address;
+	char const * filename;
+	uint32_t flags;
+	uint32_t visualmode;
+	uint32_t usleep;
+	uint32_t frame;
+} mainarg;
 
 
 //../txtpoints/4/14_17_18_225279.txt -m1
@@ -60,15 +68,12 @@ Frame: 6000    Bad PCA plane
 Frame: 1500
 */
 
-ecs_world_t * world = NULL;
-
 void loop1(struct pointcloud * pc, nng_socket sock)
 {
 	pointcloud_process (pc);
 	graphics_draw_pointcloud (pc, sock);
-	//graphics_draw_pca (pc, sock);
-	ecs_progress (world, 0);
-	printf ("Number of points: %i\n", pc->n);
+	graphics_draw_pca (pc, sock);
+	xlog (XLOG_INF, "Number of points: %i\n", pc->n);
 	//csc_v3f32_print_rgb (stdout, &pc->o);
 }
 
@@ -86,21 +91,21 @@ void loop_stdin (struct pointcloud * pc, nng_socket sock, FILE * f)
 
 
 
-void loop_file (struct pointcloud * pc, nng_socket sock, FILE * f, uint32_t arg_flags, uint32_t arg_usleep)
+void loop_file (struct pointcloud * pc, nng_socket sock, FILE * f)
 {
 	int a = '\n';
 	while (1)
 	{
-		printf ("Frame %i\n", ce30_ftell(f));
+		xlog (XLOG_INF, "Frame %i\n", ce30_ftell(f));
 		pc->n = ce30_fread (pc->x, pc->a, f);
 		loop1 (pc, sock);
-		if (arg_flags & ARG_CTRLMODE)
+		if (mainarg.flags & ARG_CTRLMODE)
 		{
 			a = getchar();
 		}
-		if (arg_usleep)
+		if (mainarg.usleep)
 		{
-			usleep (arg_usleep);
+			usleep (mainarg.usleep);
 		}
 		if (a == 'q')
 		{
@@ -111,14 +116,6 @@ void loop_file (struct pointcloud * pc, nng_socket sock, FILE * f, uint32_t arg_
 
 
 
-typedef m3f32 Rotation;
-typedef v3f32 Position;
-typedef v3f32 Velocity;
-typedef float Length;
-typedef struct GraphicServer
-{
-	nng_socket socket;
-} GraphicServer;
 
 
 
@@ -131,42 +128,29 @@ int main (int argc, char const * argv[])
 	UNUSED (argc);
 	csc_crossos_enable_ansi_color();
 
+	mainarg.address = "tcp://localhost:9002";
+	mainarg.filename = NULL;
+	mainarg.flags = 0;
+	mainarg.visualmode = 1;
+	mainarg.usleep = 0;
+	mainarg.frame = 0;
 
-
-	world = ecs_init();
-	ECS_COMPONENT(world, Rotation);
-	ECS_COMPONENT(world, Position);
-	ECS_COMPONENT(world, Velocity);
-	ECS_COMPONENT(world, Length);
-	ECS_COMPONENT(world, GraphicServer);
-	ECS_SYSTEM (world, sys_draw, EcsOnUpdate, [in] Rotation, [in] Position, [in] Length, [in] $GraphicServer);
-
-
-
-
-	char const * arg_address = "tcp://localhost:9002";
-	char const * arg_filename = NULL;
-	//char const * arg_address = NULL;
-	uint32_t arg_flags = 0;
-	uint32_t arg_visualmode = 1;
-	uint32_t arg_usleep = 0;
-	uint32_t arg_frame = 0;
 	struct csc_argv_option option[] =
 	{
-	{'h', "help",            CSC_TYPE_U32,    &arg_flags,      ARG_HELP,            "Show help"},
-	{'v', "verbose",         CSC_TYPE_U32,    &arg_flags,      ARG_VERBOSE,         "Show verbose"},
-	{'a', "address",         CSC_TYPE_STRING, &arg_address,    0,                   "The MQTT address to send to"},
-	{'f', "legacy_filename", CSC_TYPE_STRING, &arg_filename,   0,                   "Filename to f32 xyzw 320x20 file"},
-	{'i', "input",           CSC_TYPE_U32,    &arg_flags,      ARG_STDIN,           "Get pointcloud from stdin"},
-	{'m', "mode",            CSC_TYPE_U32,    &arg_visualmode, 0,                   "The visual mode"},
-	{'F', "frame",           CSC_TYPE_U32,    &arg_frame,      0,                   "The starting frame"},
-	{'c', "ctrlmode",        CSC_TYPE_U32,    &arg_flags,      ARG_CTRLMODE,        "Step forward foreach keypress"},
-	{'d', "duration",        CSC_TYPE_U32,    &arg_usleep,     0,                   "Duration for each frame"},
+	{'h', "help",            CSC_TYPE_U32,    &mainarg.flags,      ARG_HELP,            "Show help"},
+	{'v', "verbose",         CSC_TYPE_U32,    &mainarg.flags,      ARG_VERBOSE,         "Show verbose"},
+	{'i', "input",           CSC_TYPE_U32,    &mainarg.flags,      ARG_STDIN,           "Get pointcloud from stdin"},
+	{'c', "ctrlmode",        CSC_TYPE_U32,    &mainarg.flags,      ARG_CTRLMODE,        "Step forward foreach keypress"},
+	{'a', "address",         CSC_TYPE_STRING, &mainarg.address,    0,                   "The MQTT address to send to"},
+	{'f', "legacy_filename", CSC_TYPE_STRING, &mainarg.filename,   0,                   "Filename to f32 xyzw 320x20 file"},
+	{'m', "mode",            CSC_TYPE_U32,    &mainarg.visualmode, 0,                   "The visual mode"},
+	{'F', "frame",           CSC_TYPE_U32,    &mainarg.frame,      0,                   "The starting frame"},
+	{'d', "duration",        CSC_TYPE_U32,    &mainarg.usleep,     0,                   "Duration for each frame"},
 	{CSC_ARGV_END}};
 
 	csc_argv_parseall (argv+1, option);
 
-	if (arg_flags & ARG_HELP)
+	if (mainarg.flags & ARG_HELP)
 	{
 		csc_argv_description0 (option, stdout);
 		csc_argv_description1 (option, stdout);
@@ -175,19 +159,10 @@ int main (int argc, char const * argv[])
 
 
 
-	printf ("[INFO] Init remote graphic server %s\n", arg_address);
+	xlog (XLOG_INF, "Init remote graphic server %s\n", mainarg.address);
 	nng_socket sock;
-	mg_pairdial (&sock, arg_address);
+	mg_pairdial (&sock, mainarg.address);
 	graphics_init (sock);
-	ecs_singleton_set (world, GraphicServer, {sock});
-
-	ecs_entity_t e = ecs_new(world, 0);
-	//ecs_add (world, e, Position);
-	//ecs_add (world, e, Rotation);
-	//ecs_add (world, e, Length);
-	ecs_set (world, e, Position, {{1.0f, 1.0f, 1.0f}});
-	ecs_set (world, e, Rotation, {{0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f}});
-	ecs_set (world, e, Length, {0.5f});
 
 	struct pointcloud pc;
 	memset (&pc, 0, sizeof(pc));
@@ -195,11 +170,11 @@ int main (int argc, char const * argv[])
 	pointcloud_allocate (&pc);
 
 	FILE * f = NULL;
-	if (arg_filename)
+	if (mainarg.filename)
 	{
-		printf ("[INFO] Opening binary file %s to read LiDAR frames.\n", arg_filename);
-		f = fopen (arg_filename, "rb");
-		ce30_seek_set (f, arg_frame);
+		xlog (XLOG_INF, "Opening binary file %s to read LiDAR frames.\n", mainarg.filename);
+		f = fopen (mainarg.filename, "rb");
+		ce30_seek_set (f, mainarg.frame);
 	}
 	else
 	{
@@ -210,22 +185,20 @@ int main (int argc, char const * argv[])
 
 	if (f == stdin)
 	{
-		printf ("[INFO] Reading from STDIN\n");
+		xlog(XLOG_INF, "Reading from STDIN");
+		//printf ("[INFO] Reading from STDIN\n");
 		loop_stdin (&pc, sock, f);
 	}
 	else if (f != NULL)
 	{
-		printf ("[INFO] Reading from file %s\n", arg_filename);
-		loop_file (&pc, sock, f, arg_flags, arg_usleep);
+		xlog (XLOG_INF, "[INFO] Reading from file %s\n", mainarg.filename);
+		loop_file (&pc, sock, f);
 	}
 	else
 	{
 		return -1;
 	}
 
-
-
-	ecs_fini (world);
 	nng_close (sock);
 	return 0;
 }
