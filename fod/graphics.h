@@ -23,6 +23,120 @@
 
 #include "pointcloud.h"
 
+
+#define GRAPHICVERTS_MAXITEMS 100000
+struct graphicverts
+{
+	uint32_t count;
+	uint32_t last;
+	v4f32 * pos;
+	u8rgba * col;
+};
+
+
+static void graphicverts_allocate (struct graphicverts * g)
+{
+	g->last = 0;
+	ASSERT_PARAM_NOTNULL (g);
+	ASSERT (g->count < GRAPHICVERTS_MAXITEMS);
+	g->pos = calloc (sizeof(v4f32) * g->count, 1);
+	g->col = calloc (sizeof(u8rgba) * g->count, 1);
+	ASSERT_NOTNULL (g->pos);
+	ASSERT_NOTNULL (g->col);
+	xlog (XLOG_INF, "graphicverts_allocate count=%i \n", g->count);
+}
+
+static void graphicverts_reserve (struct graphicverts * g, uint32_t n)
+{
+	ASSERT_PARAM_NOTNULL (g);
+	ASSERT (g->count < GRAPHICVERTS_MAXITEMS);
+	ASSERT (g->last + n < GRAPHICVERTS_MAXITEMS);
+	ASSERT (g->last + n < g->count);
+	g->last += n;
+}
+
+static void graphicverts_push (struct graphicverts * g, uint32_t n, v4f32 p[], u8rgba c[])
+{
+	ASSERT_PARAM_NOTNULL (g);
+	ASSERT_PARAM_NOTNULL (p);
+	ASSERT_PARAM_NOTNULL (c);
+	ASSERT (g->count < GRAPHICVERTS_MAXITEMS);
+	ASSERT (g->last + n < GRAPHICVERTS_MAXITEMS);
+	ASSERT (g->last + n < g->count);
+	memcpy (g->pos + g->last, p, n * sizeof(v4f32));
+	memcpy (g->col + g->last, p, n * sizeof(u8rgba));
+	g->last += n;
+}
+
+
+
+struct graphics
+{
+	nng_socket sock;
+	struct graphicverts lines;
+	struct graphicverts points;
+};
+
+
+static void graphics_init (struct graphics * g, char const * address)
+{
+	ASSERT_PARAM_NOTNULL (g);
+	graphicverts_allocate (&g->lines);
+	graphicverts_allocate (&g->points);
+	mg_pairdial (&g->sock, address);
+	nng_socket sock = g->sock;
+	mg_send_add (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD);
+	mg_send_add (sock, MYENT_DRAW_LINES, MG_LINES);
+
+	{
+		component_count c = g->points.count;
+		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_COUNT, &c, sizeof(component_count));
+		//The color of each point. This is only used for visualization.
+		uint32_t pointcol[CE30_WH*1];
+		vu32_set1 (CE30_WH*1, pointcol+CE30_WH*0, 0xFFFFFF00);
+		//vu32_set1 (LIDAR_WH*1, pointcol+LIDAR_WH*1, 0xFFFFFF88);
+		//vu32_set1 (LIDAR_WH*1, pointcol+LIDAR_WH*2, 0xFF88FFFF);
+		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, pointcol, CE30_WH*sizeof(uint32_t)*1);
+	}
+
+	{
+		//The color of each point. This is only used for visualization.
+		v4f32 lines[6];
+		uint32_t col[6];
+		component_count c = g->lines.count;
+		vu32_set1 (6, col, 0xFFFFFFFF);
+		mg_send_set (sock, MYENT_DRAW_LINES, MG_COUNT, &c, sizeof(c));
+		mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_COL, col, sizeof(col));
+		mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, lines, sizeof(lines));
+	}
+}
+
+
+
+static void graphics_flush (struct graphics * g)
+{
+	ASSERT_PARAM_NOTNULL (g);
+	nng_socket sock = g->sock;
+	mg_send_set (sock, MYENT_DRAW_LINES, MG_COUNT, &(component_count){g->points.count}, sizeof(component_count));
+	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_COUNT, &(component_count){g->lines.count}, sizeof(component_count));
+	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, g->points.pos, sizeof(v4f32)*g->points.last);
+	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, g->points.col, sizeof(u8rgba)*g->points.last);
+	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, g->lines.pos, sizeof(v4f32)*g->lines.last);
+	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_COL, g->lines.col, sizeof(u8rgba)*g->lines.last);
+
+	g->points.last = 0;
+	g->lines.last = 0;
+}
+
+
+
+
+
+
+
+
+
+/*
 static void graphics_init (nng_socket sock)
 {
 	mg_send_add (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD);
@@ -56,49 +170,36 @@ static void graphics_init (nng_socket sock)
 	}
 
 }
+*/
 
 
-static void graphics_draw_pointcloud (struct pointcloud * pc, nng_socket sock)
+static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, float amp[], v3f32 x[])
 {
-	u8rgba pointcol[CE30_WH*1];
-	for (uint32_t i = 0; i < CE30_WH; ++i)
-	{
-		pointcol[i].a = 0x00;
-	}
+	uint32_t last = g->points.last;
+	v4f32 * pos = g->points.pos + last;
+	u8rgba * col = g->points.col + last;
+	graphicverts_reserve (&g->points, n);
 
 	//Set color
-	for (uint32_t i = 0; i < pc->n; ++i)
+	for (uint32_t i = 0; i < CE30_WH; ++i)
 	{
-		float w = CLAMP(pc->a[i] * 4.0f, 0.0f, 255.0f);
-		pointcol[i].r = (uint8_t)(w);
-		pointcol[i].g = (uint8_t)(w);
-		pointcol[i].b = (uint8_t)(w);
-		pointcol[i].a = 0xFF;
+		float w = CLAMP(amp[i] * 4.0f, 0.0f, 255.0f);
+		col[i].r = (uint8_t)(w);
+		col[i].g = (uint8_t)(w);
+		col[i].b = (uint8_t)(w);
+		col[i].a = 0xFF;
 		//struct csc_u8rgba c = {.r = 0x44, .g = 0x44, .b = 0x44, .a = 0xFF};
 		//pointcol[i] = c;
 	}
 
-
-
-
-	//mg_send_set (sock, MYENT_DRAW_LINES, MG_POINTCLOUD_POS, x, sizeof(struct v4f32)*LIDAR_WH);
-	v4f32 x[CE30_WH];
-	//Set point size
-	for (uint32_t i = 0; i < CE30_WH; ++i)
+	for (uint32_t i = 0; i < n; ++i)
 	{
-		x[i].w = 0.0f;
-	}
-	for (uint32_t i = 0; i < pc->n; ++i)
-	{
-		x[i].w = 10.0f;
-		x[i].x = pc->x1[i].x;
-		x[i].y = pc->x1[i].y;
-		x[i].z = pc->x1[i].z;
+		pos[i].w = 10.0f;
+		pos[i].x = x[i].x;
+		pos[i].y = x[i].y;
+		pos[i].z = x[i].z;
 	}
 
-
-	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, x, sizeof(v4f32)*CE30_WH);
-	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, pointcol, sizeof(uint32_t)*CE30_WH);
 }
 
 

@@ -68,37 +68,40 @@ Frame: 6000    Bad PCA plane
 Frame: 1500
 */
 
-void loop1(struct pointcloud * pc, nng_socket sock)
+void loop1 (struct pointcloud * pc, struct graphics * g)
 {
 	pointcloud_process (pc);
-	graphics_draw_pointcloud (pc, sock);
-	graphics_draw_pca (pc, sock);
-	xlog (XLOG_INF, "Number of points: %i\n", pc->n);
+	graphics_draw_pointcloud (g, pc->n, pc->a, pc->x);
+	graphics_draw_pointcloud (g, pc->n, pc->a, pc->x1);
+	//graphics_draw_pca (pc, sock);
 	//csc_v3f32_print_rgb (stdout, &pc->o);
+	graphics_flush (g);
 }
 
 
 
-void loop_stdin (struct pointcloud * pc, nng_socket sock, FILE * f)
+void loop_stdin (struct pointcloud * pc, struct graphics * g, FILE * f)
 {
 	while (1)
 	{
 		pc->n = ce30_fread (pc->x, pc->a, f);
+		xlog (XLOG_INF, "Number of points: %i\n", pc->n);
 		//pointcloud_readfile (pc, f);
-		loop1 (pc, sock);
+		loop1 (pc, g);
 	}
 }
 
 
 
-void loop_file (struct pointcloud * pc, nng_socket sock, FILE * f)
+void loop_file (struct pointcloud * pc, struct graphics * g, FILE * f)
 {
 	int a = '\n';
 	while (1)
 	{
 		xlog (XLOG_INF, "Frame %i\n", ce30_ftell(f));
 		pc->n = ce30_fread (pc->x, pc->a, f);
-		loop1 (pc, sock);
+		xlog (XLOG_INF, "Number of points: %i\n", pc->n);
+		loop1 (pc, g);
 		if (mainarg.flags & ARG_CTRLMODE)
 		{
 			a = getchar();
@@ -160,9 +163,10 @@ int main (int argc, char const * argv[])
 
 
 	xlog (XLOG_INF, "Init remote graphic server %s\n", mainarg.address);
-	nng_socket sock;
-	mg_pairdial (&sock, mainarg.address);
-	graphics_init (sock);
+	struct graphics g;
+	g.lines.count = 12;
+	g.points.count = CE30_WH*2;
+	graphics_init (&g, mainarg.address);
 
 	struct pointcloud pc;
 	memset (&pc, 0, sizeof(pc));
@@ -187,18 +191,18 @@ int main (int argc, char const * argv[])
 	{
 		xlog(XLOG_INF, "Reading from STDIN");
 		//printf ("[INFO] Reading from STDIN\n");
-		loop_stdin (&pc, sock, f);
+		loop_stdin (&pc, &g, f);
 	}
 	else if (f != NULL)
 	{
 		xlog (XLOG_INF, "[INFO] Reading from file %s\n", mainarg.filename);
-		loop_file (&pc, sock, f);
+		loop_file (&pc, &g, f);
 	}
 	else
 	{
 		return -1;
 	}
 
-	nng_close (sock);
+	nng_close (g.sock);
 	return 0;
 }
