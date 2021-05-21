@@ -43,7 +43,7 @@ static void graphicverts_allocate (struct graphicverts * g)
 	g->col = calloc (sizeof(u8rgba) * g->count, 1);
 	ASSERT_NOTNULL (g->pos);
 	ASSERT_NOTNULL (g->col);
-	xlog (XLOG_INF, "graphicverts_allocate count=%i \n", g->count);
+	XLOG (XLOG_INF, "Count: %i\n", g->count);
 }
 
 static void graphicverts_reserve (struct graphicverts * g, uint32_t n)
@@ -117,8 +117,8 @@ static void graphics_flush (struct graphics * g)
 {
 	ASSERT_PARAM_NOTNULL (g);
 	nng_socket sock = g->sock;
-	mg_send_set (sock, MYENT_DRAW_LINES, MG_COUNT, &(component_count){g->points.count}, sizeof(component_count));
-	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_COUNT, &(component_count){g->lines.count}, sizeof(component_count));
+	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_COUNT, &(component_count){g->points.count}, sizeof(component_count));
+	mg_send_set (sock, MYENT_DRAW_LINES, MG_COUNT, &(component_count){g->lines.count}, sizeof(component_count));
 	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, g->points.pos, sizeof(v4f32)*g->points.last);
 	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, g->points.col, sizeof(u8rgba)*g->points.last);
 	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, g->lines.pos, sizeof(v4f32)*g->lines.last);

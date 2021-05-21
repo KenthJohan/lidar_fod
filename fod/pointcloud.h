@@ -154,7 +154,7 @@ struct pointcloud
 
 static void pointcloud_allocate (struct pointcloud * pc)
 {
-	printf ("pointcloud_allocate %i\n", pc->capacity);
+	XLOG (XLOG_INF, "Capacity %i\n", pc->capacity);
 	ASSERT (pc->capacity < POINTCLOUD_MAX_CAPACITY);
 	pc->a = calloc(1, pc->capacity * sizeof (float));
 	pc->x = calloc(1, pc->capacity * sizeof (v3f32));

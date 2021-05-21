@@ -85,7 +85,7 @@ void loop_stdin (struct pointcloud * pc, struct graphics * g, FILE * f)
 	while (1)
 	{
 		pc->n = ce30_fread (pc->x, pc->a, f);
-		xlog (XLOG_INF, "Number of points: %i\n", pc->n);
+		XLOG (XLOG_INF, "Number of points: %i\n", pc->n);
 		//pointcloud_readfile (pc, f);
 		loop1 (pc, g);
 	}
@@ -98,9 +98,9 @@ void loop_file (struct pointcloud * pc, struct graphics * g, FILE * f)
 	int a = '\n';
 	while (1)
 	{
-		xlog (XLOG_INF, "Frame %i\n", ce30_ftell(f));
+		XLOG (XLOG_INF, "Frame %i\n", ce30_ftell(f));
 		pc->n = ce30_fread (pc->x, pc->a, f);
-		xlog (XLOG_INF, "Number of points: %i\n", pc->n);
+		XLOG (XLOG_INF, "Number of points: %i\n", pc->n);
 		loop1 (pc, g);
 		if (mainarg.flags & ARG_CTRLMODE)
 		{
@@ -162,7 +162,7 @@ int main (int argc, char const * argv[])
 
 
 
-	xlog (XLOG_INF, "Init remote graphic server %s\n", mainarg.address);
+	XLOG (XLOG_INF, "Init remote graphic server %s\n", mainarg.address);
 	struct graphics g;
 	g.lines.count = 12;
 	g.points.count = CE30_WH*2;
@@ -176,7 +176,7 @@ int main (int argc, char const * argv[])
 	FILE * f = NULL;
 	if (mainarg.filename)
 	{
-		xlog (XLOG_INF, "Opening binary file %s to read LiDAR frames.\n", mainarg.filename);
+		XLOG (XLOG_INF, "Opening binary file %s to read LiDAR frames.\n", mainarg.filename);
 		f = fopen (mainarg.filename, "rb");
 		ce30_seek_set (f, mainarg.frame);
 	}
@@ -189,13 +189,13 @@ int main (int argc, char const * argv[])
 
 	if (f == stdin)
 	{
-		xlog(XLOG_INF, "Reading from STDIN");
+		XLOG (XLOG_INF, "Reading from STDIN");
 		//printf ("[INFO] Reading from STDIN\n");
 		loop_stdin (&pc, &g, f);
 	}
 	else if (f != NULL)
 	{
-		xlog (XLOG_INF, "[INFO] Reading from file %s\n", mainarg.filename);
+		XLOG (XLOG_INF, "Reading from file %s\n", mainarg.filename);
 		loop_file (&pc, &g, f);
 	}
 	else

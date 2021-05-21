@@ -11,28 +11,31 @@ enum xloglvl
 	XLOG_INF
 };
 
-
-void xlog(enum xloglvl level, char * format, ...)
+static char const * xloglvl_tostr(enum xloglvl level)
 {
-	va_list args;
-	va_start (args, format);
-	char * color = "";
 	switch (level)
 	{
 	case XLOG_ERR:
-		color = TCOL(TCOL_NORMAL, TCOL_RED, TCOL_DEFAULT);
-		printf ("%sERR: ", color);
+		return TFG(255,50,50) "ERR" TCOL_RST;
 		break;
 	case XLOG_WRN:
-		color = TCOL(TCOL_NORMAL, TCOL_YELLOW, TCOL_DEFAULT);
-		printf ("%sWRN: ", color);
+		return TFG(200,200,50) "WRN" TCOL_RST;
 		break;
 	case XLOG_INF:
-		color = TCOL(TCOL_NORMAL, TCOL_BLUE, TCOL_DEFAULT);
-		printf ("%sINF: ", color);
+		return TFG(180,180,255) "INF" TCOL_RST;
 		break;
 	}
-	printf ("%s", TCOL_RST);
+	return "";
+}
+
+#define XLOG(level, format, ...) xlog(__COUNTER__, __FILE__, __LINE__, __func__, level, (format), ## __VA_ARGS__)
+
+void xlog(int counter, char const * file, int line, char const * func, enum xloglvl level, char * format, ...)
+{
+	va_list args;
+	va_start (args, format);
+	char * w = TFG(100,100,100);
+	printf ("%s%s [%i] %s:%i %s(): "TCOL_RST, xloglvl_tostr(level), w, counter, file, line, func);
 	vprintf (format, args);
 	va_end (args);
 }
