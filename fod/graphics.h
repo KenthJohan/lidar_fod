@@ -89,23 +89,26 @@ static void graphics_init (struct graphics * g, char const * address)
 	mg_send_add (sock, MYENT_DRAW_LINES, MG_LINES);
 
 	{
-		component_count c = g->points.count;
-		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_COUNT, &c, sizeof(component_count));
+		component_count points_count = g->points.count;
+		component_count lines_count = g->lines.count;
+		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_CAPACITY, &points_count, sizeof(component_count));
+		mg_send_set (sock, MYENT_DRAW_LINES, MG_CAPACITY, &lines_count, sizeof(component_count));
+	}
+
+	{
 		//The color of each point. This is only used for visualization.
-		uint32_t pointcol[CE30_WH*1];
-		vu32_set1 (CE30_WH*1, pointcol+CE30_WH*0, 0xFFFFFF00);
+		uint32_t color[CE30_WH*1];
+		vu32_set1 (CE30_WH*1, color+CE30_WH*0, 0xFFFFFF00);
 		//vu32_set1 (LIDAR_WH*1, pointcol+LIDAR_WH*1, 0xFFFFFF88);
 		//vu32_set1 (LIDAR_WH*1, pointcol+LIDAR_WH*2, 0xFF88FFFF);
-		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, pointcol, CE30_WH*sizeof(uint32_t)*1);
+		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, color, CE30_WH*sizeof(uint32_t)*1);
 	}
 
 	{
 		//The color of each point. This is only used for visualization.
 		v4f32 lines[6];
 		uint32_t col[6];
-		component_count c = g->lines.count;
 		vu32_set1 (6, col, 0xFFFFFFFF);
-		mg_send_set (sock, MYENT_DRAW_LINES, MG_COUNT, &c, sizeof(c));
 		mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_COL, col, sizeof(col));
 		mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, lines, sizeof(lines));
 	}
@@ -117,8 +120,10 @@ static void graphics_flush (struct graphics * g)
 {
 	ASSERT_PARAM_NOTNULL (g);
 	nng_socket sock = g->sock;
+	/*
 	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_COUNT, &(component_count){g->points.count}, sizeof(component_count));
 	mg_send_set (sock, MYENT_DRAW_LINES, MG_COUNT, &(component_count){g->lines.count}, sizeof(component_count));
+	*/
 	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, g->points.pos, sizeof(v4f32)*g->points.last);
 	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, g->points.col, sizeof(u8rgba)*g->points.last);
 	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, g->lines.pos, sizeof(v4f32)*g->lines.last);
@@ -205,30 +210,35 @@ static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, float amp
 
 
 
-static void graphics_draw_pca (struct pointcloud * pc, nng_socket sock)
+static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3])
 {
-	v3f32 const * e = pc->e; //Rename
-	v4f32 pos[6];
-	v4f32_set1     (pos + 0, 0.0f);
-	v4f32_set1     (pos + 2, 0.0f);
-	v4f32_set1     (pos + 4, 0.0f);
+	uint32_t last = g->lines.last;
+	v4f32 * pos = g->lines.pos + last;
+	u8rgba * col = g->lines.col + last;
+	graphicverts_reserve (&g->lines, 6);
+
+	v4f32_set1 (pos + 0, 0.0f);
+	v4f32_set1 (pos + 2, 0.0f);
+	v4f32_set1 (pos + 4, 0.0f);
 
 	v4f32_set_xyzw (pos + 1, e[0].x, e[0].y, e[0].z, 0.0f);
 	v4f32_set_xyzw (pos + 3, e[1].x, e[1].y, e[1].z, 0.0f);
 	v4f32_set_xyzw (pos + 5, e[2].x, e[2].y, e[2].z, 0.0f);
 
 	//https://math.stackexchange.com/questions/1447730/drawing-ellipse-from-eigenvalue-eigenvector
-	v4f32_mul (pos + 1, pos + 1, sqrtf(pc->w[0]));
-	v4f32_mul (pos + 3, pos + 3, sqrtf(pc->w[1]));
-	v4f32_mul (pos + 5, pos + 5, sqrtf(pc->w[2]));
+	v4f32_mul (pos + 1, pos + 1, sqrtf(w[0]));
+	v4f32_mul (pos + 3, pos + 3, sqrtf(w[1]));
+	v4f32_mul (pos + 5, pos + 5, sqrtf(w[2]));
 
 	u8rgba col_x = {{0xFF, 0xAA, 0xAA, 0xFF}};
 	u8rgba col_y = {{0xAA, 0xFF, 0xAA, 0xFF}};
 	u8rgba col_z = {{0xAA, 0xAA, 0xFF, 0xFF}};
-	u8rgba col[6] = {col_x,col_x, col_y,col_y, col_z,col_z};
-
-	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, pos, sizeof(pos));
-	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_COL, col, sizeof(col));
+	col[0] = col_x;
+	col[1] = col_x;
+	col[2] = col_y;
+	col[3] = col_y;
+	col[4] = col_z;
+	col[5] = col_z;
 }
 
 
