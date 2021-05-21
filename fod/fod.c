@@ -71,7 +71,7 @@ Frame: 1500
 void loop1 (struct pointcloud * pc, struct graphics * g)
 {
 	pointcloud_process (pc);
-	graphics_draw_pca (g, pc->e, pc->w);
+	graphics_draw_pca (g, pc->e, pc->w, &pc->o);
 	graphics_draw_pointcloud (g, pc->n, pc->a, pc->x);
 	graphics_draw_pointcloud (g, pc->n, pc->a, pc->x1);
 	//graphics_draw_pca (pc, sock);

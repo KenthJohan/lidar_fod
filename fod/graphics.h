@@ -210,25 +210,19 @@ static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, float amp
 
 
 
-static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3])
+static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3], v3f32 * c)
 {
 	uint32_t last = g->lines.last;
 	v4f32 * pos = g->lines.pos + last;
 	u8rgba * col = g->lines.col + last;
 	graphicverts_reserve (&g->lines, 6);
 
-	v4f32_set1 (pos + 0, 0.0f);
-	v4f32_set1 (pos + 2, 0.0f);
-	v4f32_set1 (pos + 4, 0.0f);
-
-	v4f32_set_xyzw (pos + 1, e[0].x, e[0].y, e[0].z, 0.0f);
-	v4f32_set_xyzw (pos + 3, e[1].x, e[1].y, e[1].z, 0.0f);
-	v4f32_set_xyzw (pos + 5, e[2].x, e[2].y, e[2].z, 0.0f);
-
-	//https://math.stackexchange.com/questions/1447730/drawing-ellipse-from-eigenvalue-eigenvector
-	v4f32_mul (pos + 1, pos + 1, sqrtf(w[0]));
-	v4f32_mul (pos + 3, pos + 3, sqrtf(w[1]));
-	v4f32_mul (pos + 5, pos + 5, sqrtf(w[2]));
+	v4f32_set_xyzw (pos + 0, c->x, c->y, c->z, 0.0f);
+	v4f32_set_xyzw (pos + 2, c->x, c->y, c->z, 0.0f);
+	v4f32_set_xyzw (pos + 4, c->x, c->y, c->z, 0.0f);
+	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0]));
+	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[0]));
+	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[0]));
 
 	u8rgba col_x = {{0xFF, 0xAA, 0xAA, 0xFF}};
 	u8rgba col_y = {{0xAA, 0xFF, 0xAA, 0xFF}};
