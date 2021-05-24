@@ -179,7 +179,20 @@ static void graphics_init (nng_socket sock)
 */
 
 
-static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, v3f32 x[], float a[])
+u8rgba graphics_cid (uint8_t id)
+{
+	switch (id)
+	{
+	case 0:
+		return (u8rgba) {.r = 255, .g = 255, .b = 255};
+	case 1:
+		return (u8rgba) {.r = 100, .g = 255, .b = 100};
+	}
+	return (u8rgba) {.r = 255, .g = 255, .b = 255};
+}
+
+
+static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, v3f32 x[], float a[], uint8_t cid[])
 {
 	uint32_t last = g->points.last;
 	v4f32 * pos = g->points.pos + last;
@@ -198,10 +211,18 @@ static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, v3f32 x[]
 		{
 			w = 255.0f;
 		}
-		col[i].r = (uint8_t)(w);
-		col[i].g = (uint8_t)(w);
-		col[i].b = (uint8_t)(w);
-		col[i].a = 0xFF;
+		if (cid)
+		{
+			col[i] = graphics_cid(cid[i]);
+			col[i].a = 0xFF;
+		}
+		else
+		{
+			col[i].r = (uint8_t)(w);
+			col[i].g = (uint8_t)(w);
+			col[i].b = (uint8_t)(w);
+			col[i].a = 0xFF;
+		}
 		//struct csc_u8rgba c = {.r = 0x44, .g = 0x44, .b = 0x44, .a = 0xFF};
 		//pointcol[i] = c;
 	}
@@ -230,9 +251,9 @@ static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3], v3f3
 	v4f32_set_xyzw (pos + 0, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 2, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 4, c->x, c->y, c->z, 0.0f);
-	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0]));
-	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1]));
-	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2]));
+	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*10.0f);
+	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1])*10.0f);
+	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2])*10.0f);
 
 	u8rgba col_x = {{0xFF, 0xAA, 0xAA, 0xFF}};
 	u8rgba col_y = {{0xAA, 0xFF, 0xAA, 0xFF}};

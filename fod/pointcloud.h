@@ -1,6 +1,9 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "csc_debug.h"
 #include "csc_m3f32.h"
 #include "csc_m3f32_print.h"
@@ -11,7 +14,9 @@
 
 #include "../shared/shared.h"
 #include "../shared/ce30.h"
+
 #include "mathmisc.h"
+#include "graphics.h"
 
 static void pointcloud_centering (v3f32 const x[], v3f32 y[], uint32_t n, float k, v3f32 * centroid)
 {
@@ -157,19 +162,52 @@ static void pointcloud_allocate (struct pointcloud * pc)
 
 //Maximize n and minimize h
 
-static void pointcloud_process (struct pointcloud * pc, uint32_t n, v3f32 x[])
+static void pointcloud_process (struct graphics * g, struct pointcloud * pc, uint32_t n, v3f32 x[], float a[])
 {
-	v3f32 const * s = x + (rand() * n) / RAND_MAX;
-	pc->n = v3f32_ball (x, n, s, pc->x1, 0.5f);
+	//v3f32 const * s = x + (rand() * n) / RAND_MAX;
+	//pc->n = v3f32_ball (x, n, s, pc->x1, 0.5f);
 
-	XLOG (XLOG_INF, "pc->n: %i, n: %i\n", pc->n, n);
+	//XLOG (XLOG_INF, "pc->n: %i, n: %i\n", pc->n, n);
 
 
 	{
+		v3f32 x1[CE30_WH];
+		v3f32 x2[CE30_WH];
+		uint8_t cid[CE30_WH];
+		//time_t t;
+		//float a1[CE30_WH];
+		//srand((unsigned) time(&t));
+		v3f32 const * s = x + (rand() * n) / RAND_MAX;
+		uint32_t m = v3f32_ball (x, n, s, x1, 0.5f);
+		v3f32 o = V3F32_ZERO;
+		m3f32 c;
+		v3f32 e[3]; //Eigen column vectors (Shortest, Medium, Farthest)
+		float w[3]; //Eigen values (Shortest, Medium, Farthest)
+		v3f32_meanacc (&o, x1, m);
+		v3f32_subv (x1, x1, &o, 1, 1, 0, m);
+		pointcloud_covariance (x1, m, &c, 1.0f);
+		pointcloud_eigen (&c, e, w);
+		pointcloud_conditional_basis_flip (e);
 
+		v3f32_subv (x2, x, &o, 1, 1, 0, n);
+		pointcloud_rotate ((m3f32 *)e, x2, x1, n); // (x1) := e (x2)
+
+		XLOG (XLOG_INF, "%f\n", w[0]);
+		memset (cid, 0, sizeof(cid));
+		if (w[0] < 0.0004f)
+		{
+			for (uint32_t i = 0; i < n; ++i)
+			{
+				cid[i] = fabs(x1[i].x) > 0.15f;
+			}
+		}
+		graphics_draw_pointcloud (g, n, x, a, cid);
+		graphics_draw_pointcloud (g, n, x1, NULL, NULL);
+		graphics_draw_pca (g, e, w, &o);
+		graphics_flush (g);
 	}
 
-
+/*
 	//v3f32_cpy (&pc->o, s);
 	v3f32_set1 (&pc->o, 0.0f);
 	v3f32_meanacc (&pc->o, pc->x1, pc->n);
@@ -183,6 +221,7 @@ static void pointcloud_process (struct pointcloud * pc, uint32_t n, v3f32 x[])
 	memcpy (pc->x2, pc->x1, sizeof (v3f32) * CE30_WH);
 	pointcloud_rotate ((m3f32 *)pc->e, pc->x2, pc->x1, pc->n);
 	pc->h *= 0.9f;
+	*/
 }
 
 
