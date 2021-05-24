@@ -68,11 +68,12 @@ Frame: 6000    Bad PCA plane
 Frame: 1500
 */
 
-void loop1 (struct pointcloud * pc, struct graphics * g, uint32_t n, v3f32 x[], float a[])
+void loop1 (struct pointcloud * pc, struct graphics * g, uint32_t n, v3f32 x[])
 {
 	pointcloud_process (pc, n, x);
 	graphics_draw_pca (g, pc->e, pc->w, &pc->o);
-	//graphics_draw_pointcloud (g, pc->n, pc->a, pc->x1);
+	graphics_draw_pointcloud (g, pc->n, pc->x1, NULL);
+
 	//graphics_draw_pca (pc, sock);
 	//csc_v3f32_print_rgb (stdout, &pc->o);
 	graphics_flush (g);
@@ -88,10 +89,10 @@ void loop_stdin (struct pointcloud * pc, struct graphics * g, FILE * f)
 	while (1)
 	{
 		n = ce30_fread (x, a, f);
-		XLOG (XLOG_INF, "Number of points: %i\n", n);
+		//XLOG (XLOG_INF, "Number of points: %i\n", n);
 		graphics_draw_pointcloud (g, n, x, a);
 		//pointcloud_readfile (pc, f);
-		loop1 (pc, g, n, x, a);
+		loop1 (pc, g, n, x);
 	}
 }
 
@@ -109,7 +110,7 @@ void loop_file (struct pointcloud * pc, struct graphics * g, FILE * f)
 		n = ce30_fread (x, a, f);
 		XLOG (XLOG_INF, "Number of points: %i\n", pc->n);
 		graphics_draw_pointcloud (g, n, x, a);
-		loop1 (pc, g, n, x, a);
+		loop1 (pc, g, n, x);
 		if (mainarg.flags & ARG_CTRLMODE)
 		{
 			c = getchar();

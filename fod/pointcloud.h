@@ -159,13 +159,23 @@ static void pointcloud_allocate (struct pointcloud * pc)
 
 static void pointcloud_process (struct pointcloud * pc, uint32_t n, v3f32 x[])
 {
-	pc->n = n;
+	v3f32 const * s = x + (rand() * n) / RAND_MAX;
+	pc->n = v3f32_ball (x, n, s, pc->x1, 0.5f);
 
-	v3f32 const * c = x + (rand() * n) / RAND_MAX;
-	v3f32_ball (x, n, c, pc->x1, 0.5f);
+	XLOG (XLOG_INF, "pc->n: %i, n: %i\n", pc->n, n);
 
 
-	pointcloud_centering (x, pc->x1, pc->n, 1.0f, &pc->o);
+	{
+
+	}
+
+
+	//v3f32_cpy (&pc->o, s);
+	v3f32_set1 (&pc->o, 0.0f);
+	v3f32_meanacc (&pc->o, pc->x1, pc->n);
+	v3f32_subv (pc->x1, pc->x1, &pc->o, 1, 1, 0, n);
+
+	//pointcloud_centering (x, pc->x1, pc->n, 1.0f, &pc->o);
 	pointcloud_covariance (pc->x1, pc->n, &pc->c, 1.0f);
 	pointcloud_eigen (&pc->c, pc->e, pc->w);
 	pointcloud_conditional_basis_flip (pc->e);

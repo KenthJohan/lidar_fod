@@ -187,9 +187,17 @@ static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, v3f32 x[]
 	graphicverts_reserve (&g->points, n);
 
 	//Set color
-	for (uint32_t i = 0; i < CE30_WH; ++i)
+	for (uint32_t i = 0; i < n; ++i)
 	{
-		float w = CLAMP(a[i] * 4.0f, 0.0f, 255.0f);
+		float w;
+		if (a)
+		{
+			w = CLAMP(a[i] * 4.0f, 0.0f, 255.0f);
+		}
+		else
+		{
+			w = 255.0f;
+		}
 		col[i].r = (uint8_t)(w);
 		col[i].g = (uint8_t)(w);
 		col[i].b = (uint8_t)(w);
@@ -197,6 +205,7 @@ static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, v3f32 x[]
 		//struct csc_u8rgba c = {.r = 0x44, .g = 0x44, .b = 0x44, .a = 0xFF};
 		//pointcol[i] = c;
 	}
+
 
 	for (uint32_t i = 0; i < n; ++i)
 	{
@@ -222,8 +231,8 @@ static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3], v3f3
 	v4f32_set_xyzw (pos + 2, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 4, c->x, c->y, c->z, 0.0f);
 	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0]));
-	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[0]));
-	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[0]));
+	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1]));
+	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2]));
 
 	u8rgba col_x = {{0xFF, 0xAA, 0xAA, 0xFF}};
 	u8rgba col_y = {{0xAA, 0xFF, 0xAA, 0xFF}};
