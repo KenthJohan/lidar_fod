@@ -5,10 +5,10 @@
 #include "csc_m3f32.h"
 #include "csc_m3f32_print.h"
 #include "csc_v3f32.h"
+#include "csc_xlog.h"
 #include "csc_v3f32_print.h"
 
 #include "../shared/shared.h"
-#include "../shared/log.h"
 #include "mathmisc.h"
 
 #define MAXOBJ 10

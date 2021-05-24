@@ -30,9 +30,9 @@
 #include "csc_filecopy.h"
 #include "csc_argv.h"
 #include "csc_debug.h"
+#include "csc_xlog.h"
 
 #include "../shared/shared.h"
-#include "../shared/log.h"
 #include "../shared/ce30.h"
 
 #include "mg_send.h"
@@ -68,12 +68,11 @@ Frame: 6000    Bad PCA plane
 Frame: 1500
 */
 
-void loop1 (struct pointcloud * pc, struct graphics * g)
+void loop1 (struct pointcloud * pc, struct graphics * g, uint32_t n, v3f32 x[], float a[])
 {
-	pointcloud_process (pc);
+	pointcloud_process (pc, n, x);
 	graphics_draw_pca (g, pc->e, pc->w, &pc->o);
-	graphics_draw_pointcloud (g, pc->n, pc->a, pc->x);
-	graphics_draw_pointcloud (g, pc->n, pc->a, pc->x1);
+	//graphics_draw_pointcloud (g, pc->n, pc->a, pc->x1);
 	//graphics_draw_pca (pc, sock);
 	//csc_v3f32_print_rgb (stdout, &pc->o);
 	graphics_flush (g);
@@ -83,12 +82,16 @@ void loop1 (struct pointcloud * pc, struct graphics * g)
 
 void loop_stdin (struct pointcloud * pc, struct graphics * g, FILE * f)
 {
+	v3f32 x[CE30_WH]; //Pointcloud points position
+	float a[CE30_WH]; //Pointcloud points amplitude
+	uint32_t n;
 	while (1)
 	{
-		pc->n = ce30_fread (pc->x, pc->a, f);
-		XLOG (XLOG_INF, "Number of points: %i\n", pc->n);
+		n = ce30_fread (x, a, f);
+		XLOG (XLOG_INF, "Number of points: %i\n", n);
+		graphics_draw_pointcloud (g, n, x, a);
 		//pointcloud_readfile (pc, f);
-		loop1 (pc, g);
+		loop1 (pc, g, n, x, a);
 	}
 }
 
@@ -96,22 +99,26 @@ void loop_stdin (struct pointcloud * pc, struct graphics * g, FILE * f)
 
 void loop_file (struct pointcloud * pc, struct graphics * g, FILE * f)
 {
-	int a = '\n';
+	v3f32 x[CE30_WH]; //Pointcloud points position
+	float a[CE30_WH]; //Pointcloud points amplitude
+	uint32_t n;
+	int c = '\n';
 	while (1)
 	{
 		XLOG (XLOG_INF, "Frame %i\n", ce30_ftell(f));
-		pc->n = ce30_fread (pc->x, pc->a, f);
+		n = ce30_fread (x, a, f);
 		XLOG (XLOG_INF, "Number of points: %i\n", pc->n);
-		loop1 (pc, g);
+		graphics_draw_pointcloud (g, n, x, a);
+		loop1 (pc, g, n, x, a);
 		if (mainarg.flags & ARG_CTRLMODE)
 		{
-			a = getchar();
+			c = getchar();
 		}
 		if (mainarg.usleep)
 		{
 			usleep (mainarg.usleep);
 		}
-		if (a == 'q')
+		if (c == 'q')
 		{
 			return;
 		}
@@ -163,7 +170,7 @@ int main (int argc, char const * argv[])
 
 
 
-	XLOG (XLOG_INF, "Init remote graphic server %s\n", mainarg.address);
+
 	struct graphics g;
 	g.lines.count = 12;
 	g.points.count = CE30_WH*2;

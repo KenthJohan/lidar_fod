@@ -50,7 +50,7 @@ static void graphicverts_reserve (struct graphicverts * g, uint32_t n)
 {
 	ASSERT_PARAM_NOTNULL (g);
 	ASSERT (g->count < GRAPHICVERTS_MAXITEMS);
-	ASSERT (g->last + n < GRAPHICVERTS_MAXITEMS);
+	ASSERTF (g->last + n < GRAPHICVERTS_MAXITEMS, "g->last = %i, n = %i", g->last, n);
 	ASSERT (g->last + n < g->count);
 	g->last += n;
 }
@@ -83,6 +83,7 @@ static void graphics_init (struct graphics * g, char const * address)
 	ASSERT_PARAM_NOTNULL (g);
 	graphicverts_allocate (&g->lines);
 	graphicverts_allocate (&g->points);
+	XLOG (XLOG_INF, "mg_pairdial remote graphic server %s\n", address);
 	mg_pairdial (&g->sock, address);
 	nng_socket sock = g->sock;
 	mg_send_add (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD);
@@ -178,7 +179,7 @@ static void graphics_init (nng_socket sock)
 */
 
 
-static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, float amp[], v3f32 x[])
+static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, v3f32 x[], float a[])
 {
 	uint32_t last = g->points.last;
 	v4f32 * pos = g->points.pos + last;
@@ -188,7 +189,7 @@ static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, float amp
 	//Set color
 	for (uint32_t i = 0; i < CE30_WH; ++i)
 	{
-		float w = CLAMP(amp[i] * 4.0f, 0.0f, 255.0f);
+		float w = CLAMP(a[i] * 4.0f, 0.0f, 255.0f);
 		col[i].r = (uint8_t)(w);
 		col[i].g = (uint8_t)(w);
 		col[i].b = (uint8_t)(w);
