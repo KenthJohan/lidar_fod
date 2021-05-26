@@ -181,14 +181,22 @@ static void graphics_init (nng_socket sock)
 
 u8rgba graphics_cid (uint8_t id)
 {
-	switch (id)
+	if (id & 0x04)
 	{
-	case 0:
-		return (u8rgba) {.r = 255, .g = 255, .b = 255};
-	case 1:
-		return (u8rgba) {.r = 100, .g = 255, .b = 100};
+		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0x66, .a = 0xFF};
 	}
-	return (u8rgba) {.r = 255, .g = 255, .b = 255};
+
+	if (id & 0x01)
+	{
+		return (u8rgba) {.r = 0xFF, .g = 0xFF, .b = 0x00, .a = 0xFF};
+	}
+
+	if (id & 0x02)
+	{
+		return (u8rgba) {.r = 0x77, .g = 0x77, .b = 0x00, .a = 0xFF};
+	}
+
+	return (u8rgba) {.r = 0x00, .g = 0x00, .b = 0x00, .a = 0xFF};
 }
 
 
@@ -251,13 +259,13 @@ static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3], v3f3
 	v4f32_set_xyzw (pos + 0, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 2, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 4, c->x, c->y, c->z, 0.0f);
-	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*10.0f);
-	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1])*10.0f);
-	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2])*10.0f);
+	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*2.0f);
+	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1])*2.0f);
+	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2])*2.0f);
 
-	u8rgba col_x = {{0xFF, 0xAA, 0xAA, 0xFF}};
-	u8rgba col_y = {{0xAA, 0xFF, 0xAA, 0xFF}};
-	u8rgba col_z = {{0xAA, 0xAA, 0xFF, 0xFF}};
+	u8rgba col_x = {{0xFF, 0x55, 0x55, 0xFF}};
+	u8rgba col_y = {{0x55, 0xFF, 0x55, 0xFF}};
+	u8rgba col_z = {{0x55, 0x55, 0xFF, 0xFF}};
 	col[0] = col_x;
 	col[1] = col_x;
 	col[2] = col_y;

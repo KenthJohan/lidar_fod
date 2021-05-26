@@ -164,64 +164,63 @@ static void pointcloud_allocate (struct pointcloud * pc)
 
 static void pointcloud_process (struct graphics * g, struct pointcloud * pc, uint32_t n, v3f32 x[], float a[])
 {
-	//v3f32 const * s = x + (rand() * n) / RAND_MAX;
-	//pc->n = v3f32_ball (x, n, s, pc->x1, 0.5f);
+	float const radius = 0.25f;
 
-	//XLOG (XLOG_INF, "pc->n: %i, n: %i\n", pc->n, n);
+	v3f32 x1[CE30_WH];
+	v3f32 x2[CE30_WH];
+	uint8_t cid[CE30_WH];
+	memset (cid, 0, sizeof(cid));
 
+	int32_t randomi = (rand() * n) / RAND_MAX;
+	v3f32 const * s = x + randomi;
+	uint32_t m = v3f32_ball (x, n, s, x1, radius);
 
+	//Visual only:
+	for(uint32_t i = 0; i < n; ++i)
 	{
-		v3f32 x1[CE30_WH];
-		v3f32 x2[CE30_WH];
-		uint8_t cid[CE30_WH];
-		//time_t t;
-		//float a1[CE30_WH];
-		//srand((unsigned) time(&t));
-		v3f32 const * s = x + (rand() * n) / RAND_MAX;
-		uint32_t m = v3f32_ball (x, n, s, x1, 0.5f);
-		v3f32 o = V3F32_ZERO;
-		m3f32 c;
-		v3f32 e[3]; //Eigen column vectors (Shortest, Medium, Farthest)
-		float w[3]; //Eigen values (Shortest, Medium, Farthest)
-		v3f32_meanacc (&o, x1, m);
-		v3f32_subv (x1, x1, &o, 1, 1, 0, m);
-		pointcloud_covariance (x1, m, &c, 1.0f);
-		pointcloud_eigen (&c, e, w);
-		pointcloud_conditional_basis_flip (e);
-
-		v3f32_subv (x2, x, &o, 1, 1, 0, n);
-		pointcloud_rotate ((m3f32 *)e, x2, x1, n); // (x1) := e (x2)
-
-		XLOG (XLOG_INF, "%f\n", w[0]);
-		memset (cid, 0, sizeof(cid));
-		if (w[0] < 0.0004f)
+		v3f32 d;
+		v3f32_sub (&d, x + i, s);
+		if (v3f32_norm2 (&d) < (radius*radius))
 		{
-			for (uint32_t i = 0; i < n; ++i)
-			{
-				cid[i] = fabs(x1[i].x) > 0.15f;
-			}
+			cid[i] |= 0x01;
 		}
-		graphics_draw_pointcloud (g, n, x, a, cid);
-		graphics_draw_pointcloud (g, n, x1, NULL, NULL);
-		graphics_draw_pca (g, e, w, &o);
-		graphics_flush (g);
 	}
 
-/*
-	//v3f32_cpy (&pc->o, s);
-	v3f32_set1 (&pc->o, 0.0f);
-	v3f32_meanacc (&pc->o, pc->x1, pc->n);
-	v3f32_subv (pc->x1, pc->x1, &pc->o, 1, 1, 0, n);
 
-	//pointcloud_centering (x, pc->x1, pc->n, 1.0f, &pc->o);
-	pointcloud_covariance (pc->x1, pc->n, &pc->c, 1.0f);
-	pointcloud_eigen (&pc->c, pc->e, pc->w);
-	pointcloud_conditional_basis_flip (pc->e);
-	pointcloud_reorder_eigen (pc->e, pc->w);
-	memcpy (pc->x2, pc->x1, sizeof (v3f32) * CE30_WH);
-	pointcloud_rotate ((m3f32 *)pc->e, pc->x2, pc->x1, pc->n);
-	pc->h *= 0.9f;
-	*/
+	v3f32 o = V3F32_ZERO;
+	m3f32 c;
+	v3f32 e[3]; //Eigen column vectors (Shortest, Medium, Farthest)
+	float w[3]; //Eigen values (Shortest, Medium, Farthest)
+	v3f32_meanacc (&o, x1, m);
+	v3f32_subv (x1, x1, &o, 1, 1, 0, m);
+	pointcloud_covariance (x1, m, &c, 1.0f);
+	pointcloud_eigen (&c, e, w);
+	pointcloud_conditional_basis_flip (e);
+	v3f32_subv (x2, x, &o, 1, 1, 0, n);
+	pointcloud_rotate ((m3f32 *)e, x2, x1, n); // (x1) := e (x2)
+
+	XLOG (XLOG_INF, "%f\n", w[0]);
+
+	//Check if PCA is formed by a planar pointcloud:
+	//w[0] = Shortest, w[1] = Medium, w[2] = Farthest:
+	if ((2.0f*w[0] < w[1]))
+	{
+		//Classify objects withing circle sector at ball location:
+		int32_t a = MAX(randomi - 1000, 0);
+		int32_t b = MIN(randomi + 1000, CE30_WH);
+		for (int32_t i = a; i < b; ++i)
+		{
+			//Check if
+			cid[i] |= 0x02;
+			if (fabs(x1[i].x) < 0.15f) {continue;}
+			cid[i] |= 0x04;
+		}
+	}
+	graphics_draw_pointcloud (g, n, x, a, cid);
+	graphics_draw_pointcloud (g, n, x1, NULL, NULL);
+	graphics_draw_pca (g, e, w, &o);
+	graphics_flush (g);
+
 }
 
 
