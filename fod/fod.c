@@ -62,7 +62,7 @@ struct
 
 
 
-void loop_stdin (struct pointcloud * pc, struct graphics * g, FILE * f)
+void loop_stdin (struct trackers * pc, struct graphics * g, FILE * f)
 {
 	v3f32 x[CE30_WH]; //Pointcloud points position
 	float a[CE30_WH]; //Pointcloud points amplitude
@@ -77,7 +77,7 @@ void loop_stdin (struct pointcloud * pc, struct graphics * g, FILE * f)
 
 
 
-void loop_file (struct pointcloud * pc, struct graphics * g, FILE * f)
+void loop_file (struct trackers * pc, struct graphics * g, FILE * f)
 {
 	v3f32 x[CE30_WH]; //Pointcloud points position
 	float a[CE30_WH]; //Pointcloud points amplitude
@@ -85,7 +85,7 @@ void loop_file (struct pointcloud * pc, struct graphics * g, FILE * f)
 	int c = '\n';
 	while (1)
 	{
-		XLOG (XLOG_INF, "Frame %i\n", ce30_ftell(f));
+		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
 		n = ce30_fread (x, a, f);
 		pointcloud_process (g, pc, n, x, a);
 		if (mainarg.flags & ARG_CTRLMODE)
@@ -154,15 +154,13 @@ int main (int argc, char const * argv[])
 	g.points.count = CE30_WH*2;
 	graphics_init (&g, mainarg.address);
 
-	struct pointcloud pc;
-	memset (&pc, 0, sizeof(pc));
-	pc.capacity = CE30_WH;
-	pointcloud_allocate (&pc);
+	struct trackers tracks;
+	memset (&tracks, 0, sizeof(tracks));
 
 	FILE * f = NULL;
 	if (mainarg.filename)
 	{
-		XLOG (XLOG_INF, "Opening binary file %s to read LiDAR frames.\n", mainarg.filename);
+		XLOG (XLOG_INF, XLOG_GENERAL, "Opening binary file %s to read LiDAR frames.", mainarg.filename);
 		f = fopen (mainarg.filename, "rb");
 		ce30_seek_set (f, mainarg.frame);
 	}
@@ -175,14 +173,14 @@ int main (int argc, char const * argv[])
 
 	if (f == stdin)
 	{
-		XLOG (XLOG_INF, "Reading from STDIN");
+		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from STDIN");
 		//printf ("[INFO] Reading from STDIN\n");
-		loop_stdin (&pc, &g, f);
+		loop_stdin (&tracks, &g, f);
 	}
 	else if (f != NULL)
 	{
-		XLOG (XLOG_INF, "Reading from file %s\n", mainarg.filename);
-		loop_file (&pc, &g, f);
+		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from file %s", mainarg.filename);
+		loop_file (&tracks, &g, f);
 	}
 	else
 	{

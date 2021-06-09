@@ -26,25 +26,7 @@
 
 
 
-
-
-
-struct mballs
-{
-	v3f32 * x;
-	uint32_t n;
-	uint32_t * m;
-	uint32_t cap;
-};
-
-
-
-void balls_init (struct mballs * balls)
-{
-	uint32_t n = balls->n;
-	uint32_t cap = balls->cap;
-	balls->x = calloc (1, sizeof (v3f32) * n * cap);
-}
+#define DISTANCE_ABOVE_GROUND 6.0f
 
 
 

@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <float.h>
 
 #include "csc_debug.h"
 #include "csc_m3f32.h"
@@ -17,6 +18,9 @@
 
 #include "mathmisc.h"
 #include "graphics.h"
+
+
+
 
 static void pointcloud_centering (v3f32 const x[], v3f32 y[], uint32_t n, float k, v3f32 * centroid)
 {
@@ -130,41 +134,36 @@ static void pointcloud_box_intersect (v4f32 const x[], v4f32 const y[], uint32_t
 
 
 
-
-#define POINTCLOUD_MAX_CAPACITY 100000
-
-struct pointcloud
+#define PHSYOBJS_CAP 10
+struct trackers
 {
-	uint32_t framenr;
-	uint32_t capacity;
-	uint32_t n;
-	v3f32 * x1; //n number of points in pointcloud (x,y,z),(x,y,z)
-	v3f32 * x2; //n number of points in pointcloud (x,y,z),(x,y,z)
-	m3f32 c; //Coveriance matrix
-	v3f32 e[3]; //Eigen column vectors (Shortest, Medium, Farthest)
-	float w[3]; //Eigen values (Shortest, Medium, Farthest)
-	v3f32 o; //Centroid
-	float h; //Box height
+	uint32_t count;
+	v3f32 x[PHSYOBJS_CAP];
+	uint32_t timer[PHSYOBJS_CAP];
 };
 
-static void pointcloud_allocate (struct pointcloud * pc)
+#define FLT_MAX		__FLT_MAX__
+static void tracker_update (struct trackers * po, v3f32 * x)
 {
-	XLOG (XLOG_INF, "Capacity %i\n", pc->capacity);
-	ASSERT (pc->capacity < POINTCLOUD_MAX_CAPACITY);
-	pc->x1 = calloc(1, pc->capacity * sizeof (v3f32));
-	pc->x2 = calloc(1, pc->capacity * sizeof (v3f32));
-	pc->h = 1.0f; // 1 meter?
-	ASSERT_NOTNULL (pc->x1);
-	ASSERT_NOTNULL (pc->x2);
+	float min = FLT_MAX;
+	uint32_t j = UINT32_MAX;
+	for (uint32_t i = 0; i < PHSYOBJS_CAP; ++i)
+	{
+		v3f32 d;
+		v3f32_sub (&d, po->x + i, x);
+		float l2 = v3f32_norm2 (&d);
+		min = (l2 < min) ? l2 : min;
+		j = i;
+	}
+	v3f32_add_mul(po->x + j, po->x + j, x, 0.5f, 0.5f);
 }
-
 
 
 //Maximize n and minimize h
 
-static void pointcloud_process (struct graphics * g, struct pointcloud * pc, uint32_t n, v3f32 x[], float a[])
+static void pointcloud_process (struct graphics * g, struct trackers * po, uint32_t n, v3f32 x[], float a[])
 {
-	float const radius = 0.25f;
+	float const radius = 0.3f;
 
 	v3f32 x1[CE30_WH];
 	v3f32 x2[CE30_WH];
@@ -182,6 +181,7 @@ static void pointcloud_process (struct graphics * g, struct pointcloud * pc, uin
 		v3f32_sub (&d, x + i, s);
 		if (v3f32_norm2 (&d) < (radius*radius))
 		{
+			//Tag this point as part of ball:
 			cid[i] |= 0x01;
 		}
 	}
@@ -199,22 +199,35 @@ static void pointcloud_process (struct graphics * g, struct pointcloud * pc, uin
 	v3f32_subv (x2, x, &o, 1, 1, 0, n);
 	pointcloud_rotate ((m3f32 *)e, x2, x1, n); // (x1) := e (x2)
 
-	XLOG (XLOG_INF, "%f\n", w[0]);
+	XLOG (XLOG_INF, XLOG_GENERAL, "%f", w[0]);
 
 	//Check if PCA is formed by a planar pointcloud:
-	//w[0] = Shortest, w[1] = Medium, w[2] = Farthest:
+	//w[0] = Shortest, w[1] = Medium, w[2] = Farthest.
 	if ((2.0f*w[0] < w[1]))
 	{
-		//Classify objects withing circle sector at ball location:
-		int32_t a = MAX(randomi - 1000, 0);
-		int32_t b = MIN(randomi + 1000, CE30_WH);
+		//Classify objects within circle sector at ball location:
+		//  0     a   r    b    n
+		//   \====\=======/====/
+		//     \===\=====/===/
+		//        \=\===/=/
+		//          \\=//
+		//            0
+		int32_t const arclength = 600;
+		int32_t a = MAX(randomi - arclength, 0);
+		int32_t b = MIN(randomi + arclength, CE30_WH);
+		v3f32 mean = V3F32_ZERO;
+		uint32_t n = 0;
 		for (int32_t i = a; i < b; ++i)
 		{
-			//Check if
 			cid[i] |= 0x02;
-			if (fabs(x1[i].x) < 0.15f) {continue;}
+			//Label points that is far above ground
+			if (x1[i].x < sqrtf(w[0])*DISTANCE_ABOVE_GROUND) {continue;}
 			cid[i] |= 0x04;
+			v3f32_add (&mean, &mean, x + i);
+			n++;
 		}
+		v3f32_mul (&mean, &mean, 1.0f / n);
+		tracker_update (po, &mean);
 	}
 	graphics_draw_pointcloud (g, n, x, a, cid);
 	graphics_draw_pointcloud (g, n, x1, NULL, NULL);

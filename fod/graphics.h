@@ -43,7 +43,7 @@ static void graphicverts_allocate (struct graphicverts * g)
 	g->col = calloc (sizeof(u8rgba) * g->count, 1);
 	ASSERT_NOTNULL (g->pos);
 	ASSERT_NOTNULL (g->col);
-	XLOG (XLOG_INF, "Count: %i\n", g->count);
+	XLOG (XLOG_INF, XLOG_GENERAL, "Count: %i", g->count);
 }
 
 static void graphicverts_reserve (struct graphicverts * g, uint32_t n)
@@ -51,7 +51,7 @@ static void graphicverts_reserve (struct graphicverts * g, uint32_t n)
 	ASSERT_PARAM_NOTNULL (g);
 	ASSERT (g->count < GRAPHICVERTS_MAXITEMS);
 	ASSERTF (g->last + n < GRAPHICVERTS_MAXITEMS, "g->last = %i, n = %i", g->last, n);
-	ASSERT (g->last + n < g->count);
+	ASSERTF (g->last + n <= g->count, "%i <= %i", g->last + n, g->count);
 	g->last += n;
 }
 
@@ -83,7 +83,7 @@ static void graphics_init (struct graphics * g, char const * address)
 	ASSERT_PARAM_NOTNULL (g);
 	graphicverts_allocate (&g->lines);
 	graphicverts_allocate (&g->points);
-	XLOG (XLOG_INF, "mg_pairdial remote graphic server %s\n", address);
+	XLOG (XLOG_INF, XLOG_GENERAL, "mg_pairdial remote graphic server %s", address);
 	mg_pairdial (&g->sock, address);
 	nng_socket sock = g->sock;
 	mg_send_add (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD);
@@ -188,12 +188,12 @@ u8rgba graphics_cid (uint8_t id)
 
 	if (id & 0x01)
 	{
-		return (u8rgba) {.r = 0xFF, .g = 0xFF, .b = 0x00, .a = 0xFF};
+		return (u8rgba) {.r = 0xCC, .g = 0xCC, .b = 0xCC, .a = 0xFF};
 	}
 
 	if (id & 0x02)
 	{
-		return (u8rgba) {.r = 0x77, .g = 0x77, .b = 0x00, .a = 0xFF};
+		return (u8rgba) {.r = 0x99, .g = 0x55, .b = 0x99, .a = 0xFF};
 	}
 
 	return (u8rgba) {.r = 0x00, .g = 0x00, .b = 0x00, .a = 0xFF};
@@ -254,24 +254,41 @@ static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3], v3f3
 	uint32_t last = g->lines.last;
 	v4f32 * pos = g->lines.pos + last;
 	u8rgba * col = g->lines.col + last;
-	graphicverts_reserve (&g->lines, 6);
+	graphicverts_reserve (&g->lines, 12);
+	float l = 8.0f;
+	u8rgba col_x = {{0xFF, 0x55, 0x55, 0xFF}};
+	u8rgba col_y = {{0x55, 0xFF, 0x55, 0xFF}};
+	u8rgba col_z = {{0x55, 0x55, 0xFF, 0xFF}};
 
 	v4f32_set_xyzw (pos + 0, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 2, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 4, c->x, c->y, c->z, 0.0f);
-	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*2.0f);
-	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1])*2.0f);
-	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2])*2.0f);
-
-	u8rgba col_x = {{0xFF, 0x55, 0x55, 0xFF}};
-	u8rgba col_y = {{0x55, 0xFF, 0x55, 0xFF}};
-	u8rgba col_z = {{0x55, 0x55, 0xFF, 0xFF}};
+	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*DISTANCE_ABOVE_GROUND);
+	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1])*l);
+	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2])*l);
 	col[0] = col_x;
 	col[1] = col_x;
 	col[2] = col_y;
 	col[3] = col_y;
 	col[4] = col_z;
 	col[5] = col_z;
+
+
+
+	v4f32_set_xyzw (pos + 6, c->x, c->y, c->z, 0.0f);
+	v4f32_set_xyzw (pos + 8, c->x, c->y, c->z, 0.0f);
+	v4f32_set_xyzw (pos + 10, c->x, c->y, c->z, 0.0f);
+	v3f32_add_mul ((v3f32*)(pos + 7), c, e + 0, 1.0, -sqrtf(w[0])*DISTANCE_ABOVE_GROUND);
+	v3f32_add_mul ((v3f32*)(pos + 9), c, e + 1, 1.0, -sqrtf(w[1])*l);
+	v3f32_add_mul ((v3f32*)(pos + 11), c, e + 2, 1.0, -sqrtf(w[2])*l);
+	col[6] = col_x;
+	col[7] = col_x;
+	col[8] = col_y;
+	col[9] = col_y;
+	col[10] = col_z;
+	col[11] = col_z;
+
+
 }
 
 

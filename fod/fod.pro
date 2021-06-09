@@ -14,7 +14,7 @@ SOURCES += fod.c
 
 HEADERS += calculation.h
 HEADERS += myent.h
-HEADERS += mathmisc.h
+HEADERS += misc.h
 HEADERS += pointcloud.h
 HEADERS += graphics.h
 HEADERS += mg_comp.h
