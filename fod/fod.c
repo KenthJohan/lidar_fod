@@ -51,12 +51,11 @@
 
 struct
 {
-	char const * address;
-	char const * filename;
-	uint32_t flags;
-	uint32_t visualmode;
-	uint32_t usleep;
-	uint32_t frame;
+	char const * address; //Grahpic remote address
+	char const * filename; //Load filename
+	uint32_t flags; //Misc flags
+	uint32_t usleep; //Microseconds sleep each frame
+	uint32_t frame; //Start from this frame when loading a file.
 } mainarg;
 
 
@@ -88,18 +87,9 @@ void loop_file (struct trackers * pc, struct graphics * g, FILE * f)
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
 		n = ce30_fread (x, a, f);
 		pointcloud_process (g, pc, n, x, a);
-		if (mainarg.flags & ARG_CTRLMODE)
-		{
-			c = getchar();
-		}
-		if (mainarg.usleep)
-		{
-			usleep (mainarg.usleep);
-		}
-		if (c == 'q')
-		{
-			return;
-		}
+		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
+		if (mainarg.usleep){usleep (mainarg.usleep);}
+		if (c == 'q'){return;}
 	}
 }
 
@@ -120,7 +110,6 @@ int main (int argc, char const * argv[])
 	mainarg.address = "tcp://localhost:9002";
 	mainarg.filename = NULL;
 	mainarg.flags = 0;
-	mainarg.visualmode = 1;
 	mainarg.usleep = 0;
 	mainarg.frame = 0;
 
@@ -132,7 +121,6 @@ int main (int argc, char const * argv[])
 	{'c', "ctrlmode",        CSC_TYPE_U32,    &mainarg.flags,      ARG_CTRLMODE,        "Step forward foreach keypress"},
 	{'a', "address",         CSC_TYPE_STRING, &mainarg.address,    0,                   "The MQTT address to send to"},
 	{'f', "legacy_filename", CSC_TYPE_STRING, &mainarg.filename,   0,                   "Filename to f32 xyzw 320x20 file"},
-	{'m', "mode",            CSC_TYPE_U32,    &mainarg.visualmode, 0,                   "The visual mode"},
 	{'F', "frame",           CSC_TYPE_U32,    &mainarg.frame,      0,                   "The starting frame"},
 	{'d', "duration",        CSC_TYPE_U32,    &mainarg.usleep,     0,                   "Duration for each frame"},
 	{CSC_ARGV_END}};

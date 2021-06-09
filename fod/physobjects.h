@@ -9,7 +9,7 @@
 #include "csc_v3f32_print.h"
 
 #include "../shared/shared.h"
-#include "mathmisc.h"
+#include "misc.h"
 
 #define MAXOBJ 10
 

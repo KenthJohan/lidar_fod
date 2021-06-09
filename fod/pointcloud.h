@@ -16,7 +16,7 @@
 #include "../shared/shared.h"
 #include "../shared/ce30.h"
 
-#include "mathmisc.h"
+#include "misc.h"
 #include "graphics.h"
 
 
@@ -116,16 +116,15 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
 }
 
 
-static void pointcloud_box_intersect (v4f32 const x[], v4f32 const y[], uint32_t n)
-{
-	for (uint32_t i = 0; i < n; ++i)
-	{
-		if (x[i].z)
-		{
 
-		}
-	}
-}
+
+
+
+
+
+
+
+
 
 
 
@@ -159,6 +158,30 @@ static void tracker_update (struct trackers * po, v3f32 * x)
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //Maximize n and minimize h
 
 static void pointcloud_process (struct graphics * g, struct trackers * po, uint32_t n, v3f32 x[], float a[])
@@ -182,7 +205,7 @@ static void pointcloud_process (struct graphics * g, struct trackers * po, uint3
 		if (v3f32_norm2 (&d) < (radius*radius))
 		{
 			//Tag this point as part of ball:
-			cid[i] |= 0x01;
+			cid[i] |= POINTLABEL_SEARCH;
 		}
 	}
 
@@ -219,10 +242,10 @@ static void pointcloud_process (struct graphics * g, struct trackers * po, uint3
 		uint32_t n = 0;
 		for (int32_t i = a; i < b; ++i)
 		{
-			cid[i] |= 0x02;
+			cid[i] |= POINTLABEL_SECTOR;
 			//Label points that is far above ground
 			if (x1[i].x < sqrtf(w[0])*DISTANCE_ABOVE_GROUND) {continue;}
-			cid[i] |= 0x04;
+			cid[i] |= POINTLABEL_OBJ;
 			v3f32_add (&mean, &mean, x + i);
 			n++;
 		}

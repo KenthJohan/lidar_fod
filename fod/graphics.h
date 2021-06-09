@@ -14,7 +14,7 @@
 #include "../shared/shared.h"
 #include "../shared/ce30.h"
 
-#include "mathmisc.h"
+#include "misc.h"
 
 #include "mg_attr.h"
 #include "mg_comp.h"
@@ -34,16 +34,16 @@ struct graphicverts
 };
 
 
-static void graphicverts_allocate (struct graphicverts * g)
+static void graphicverts_allocate (struct graphicverts * g, char const * name)
 {
-	g->last = 0;
 	ASSERT_PARAM_NOTNULL (g);
 	ASSERT (g->count < GRAPHICVERTS_MAXITEMS);
+	g->last = 0;
 	g->pos = calloc (sizeof(v4f32) * g->count, 1);
 	g->col = calloc (sizeof(u8rgba) * g->count, 1);
 	ASSERT_NOTNULL (g->pos);
 	ASSERT_NOTNULL (g->col);
-	XLOG (XLOG_INF, XLOG_GENERAL, "Count: %i", g->count);
+	XLOG (XLOG_INF, XLOG_GENERAL, "Allocated %i %s vertices", g->count, name ? name : "");
 }
 
 static void graphicverts_reserve (struct graphicverts * g, uint32_t n)
@@ -81,8 +81,9 @@ struct graphics
 static void graphics_init (struct graphics * g, char const * address)
 {
 	ASSERT_PARAM_NOTNULL (g);
-	graphicverts_allocate (&g->lines);
-	graphicverts_allocate (&g->points);
+	ASSERT_PARAM_NOTNULL (address);
+	graphicverts_allocate (&g->lines, "Lines");
+	graphicverts_allocate (&g->points, "Points");
 	XLOG (XLOG_INF, XLOG_GENERAL, "mg_pairdial remote graphic server %s", address);
 	mg_pairdial (&g->sock, address);
 	nng_socket sock = g->sock;
@@ -181,17 +182,17 @@ static void graphics_init (nng_socket sock)
 
 u8rgba graphics_cid (uint8_t id)
 {
-	if (id & 0x04)
+	if (id & POINTLABEL_OBJ)
 	{
 		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0x66, .a = 0xFF};
 	}
 
-	if (id & 0x01)
+	if (id & POINTLABEL_SEARCH)
 	{
 		return (u8rgba) {.r = 0xCC, .g = 0xCC, .b = 0xCC, .a = 0xFF};
 	}
 
-	if (id & 0x02)
+	if (id & POINTLABEL_SECTOR)
 	{
 		return (u8rgba) {.r = 0x99, .g = 0x55, .b = 0x99, .a = 0xFF};
 	}
