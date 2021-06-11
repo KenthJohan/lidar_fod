@@ -61,7 +61,7 @@ struct
 
 
 
-void loop_stdin (struct trackers * pc, struct graphics * g, FILE * f)
+void loop_stdin (struct poitracker * pc, struct graphics * g, FILE * f)
 {
 	v3f32 x[CE30_WH]; //Pointcloud points position
 	float a[CE30_WH]; //Pointcloud points amplitude
@@ -76,7 +76,7 @@ void loop_stdin (struct trackers * pc, struct graphics * g, FILE * f)
 
 
 
-void loop_file (struct trackers * pc, struct graphics * g, FILE * f)
+void loop_file (struct poitracker * pc, struct graphics * g, FILE * f)
 {
 	v3f32 x[CE30_WH]; //Pointcloud points position
 	float a[CE30_WH]; //Pointcloud points amplitude
@@ -142,9 +142,8 @@ int main (int argc, char const * argv[])
 	g.points.count = CE30_WH*2;
 	graphics_init (&g, mainarg.address);
 
-	struct trackers tracks;
-	memset (&tracks, 0, sizeof(tracks));
-	vf32_set1 (PHSYOBJS_CAP, tracks.r, FLT_MAX);
+	struct poitracker tracker;
+	poitracker_init (&tracker);
 
 	FILE * f = NULL;
 	if (mainarg.filename)
@@ -164,12 +163,12 @@ int main (int argc, char const * argv[])
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from STDIN");
 		//printf ("[INFO] Reading from STDIN\n");
-		loop_stdin (&tracks, &g, f);
+		loop_stdin (&tracker, &g, f);
 	}
 	else if (f != NULL)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from file %s", mainarg.filename);
-		loop_file (&tracks, &g, f);
+		loop_file (&tracker, &g, f);
 	}
 	else
 	{

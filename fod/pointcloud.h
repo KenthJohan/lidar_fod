@@ -121,58 +121,78 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-#define PHSYOBJS_CAP 10
-struct trackers
+/**
+ * @brief tracker_update1
+ * @param h Intersection hits
+ * @param r Radiuses
+ * @param y Tracker positions
+ * @param count
+ * @param x Detection coordinate
+ */
+static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count, v3f32 const * x)
 {
-	uint32_t count;
-	float r[PHSYOBJS_CAP];
-	v3f32 x[PHSYOBJS_CAP];
-	uint32_t h[PHSYOBJS_CAP];
-};
-
-
-static void tracker_update (struct trackers * po, v3f32 * x)
-{
+	//Check if (x) is inside a existing tracker sphere:
 	uint32_t i;
-	for (i = 0; i < PHSYOBJS_CAP; ++i)
+	for (i = 0; i < count; ++i)
 	{
 		v3f32 d;
-		v3f32_sub (&d, x, po->x + i);
-		if (v3f32_norm2 (&d) < (po->r[i]))
+		v3f32_sub (&d, x, y + i);
+		if (v3f32_norm2 (&d) < r[i])
 		{
-			po->h[i]++;
-			po->h[i] = MIN (po->h[i], 10);
-			po->r[i] = 0.2f * 0.2f;
-			po->x[i] = *x;
+			h[i] += 0.2f;//Increase intersect hits
+			h[i] = MIN (h[i], 1.0f);
+			r[i] = 0.2f * 0.2f;
+			y[i] = *x;
 			break;
 		}
 	}
-	for (uint32_t j = 0; j < PHSYOBJS_CAP; ++j)
+
+	//Merge trackers if their sphere intersects:
+	for (uint32_t j = 0; j < count; ++j)
 	{
 		v3f32 d;
-		v3f32_sub (&d, x, po->x + j);
+		v3f32_sub (&d, x, y + j);
 		float l2 = v3f32_norm2 (&d);
-		float r2 = po->r[j];
+		float r2 = r[j];
 		if (j == i) {continue;}
 		if (l2 > r2) {continue;}
 		if (r2 == FLT_MAX) {continue;}
-		po->r[j] = FLT_MAX;
-		po->x[j] = (v3f32){{0.0f, 0.0f, 0.0f}};
+		r[j] = FLT_MAX;
+		y[j] = (v3f32){{0.0f, 0.0f, 0.0f}};
 		XLOG (XLOG_INF, XLOG_GENERAL, "Merging object tracker %i %i", i, j);
 	}
+}
+
+
+
+
+
+
+
+
+
+
+
+#define POITRACKER_CAPACITY 5
+struct poitracker
+{
+	uint32_t count;
+	float r[POITRACKER_CAPACITY];
+	v3f32 x[POITRACKER_CAPACITY];
+	float h[POITRACKER_CAPACITY];
+};
+
+static void poitracker_init (struct poitracker * tracker)
+{
+	memset (tracker, 0, sizeof (struct poitracker));
+	vf32_set1 (POITRACKER_CAPACITY, tracker->r, FLT_MAX);
+	vf32_set1 (POITRACKER_CAPACITY, tracker->h, 0.0f);
+}
+
+
+static void poitracker_update (struct poitracker * tracker, v3f32 * x)
+{
+	poitracker_update1 (tracker->h, tracker->r, tracker->x, POITRACKER_CAPACITY, x);
 }
 
 
@@ -202,7 +222,7 @@ static void tracker_update (struct trackers * po, v3f32 * x)
 
 //Maximize n and minimize h
 
-static void pointcloud_process (struct graphics * g, struct trackers * po, uint32_t n, v3f32 x[], float a[])
+static void pointcloud_process (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], float a[])
 {
 	float const radius = 0.3f;
 
@@ -262,7 +282,7 @@ static void pointcloud_process (struct graphics * g, struct trackers * po, uint3
 		//            0
 		int32_t const arclength = 600;
 		int32_t a = MAX(randomi - arclength, 0);
-		int32_t b = MIN(randomi + arclength, CE30_WH);
+		int32_t b = MIN(randomi + arclength, (int32_t)n);
 		int32_t cluster[CLUSTER_CAPACITY];
 		uint32_t j = 0;
 		for (int32_t i = a; (i < b) && (j < CLUSTER_CAPACITY); ++i)
@@ -278,17 +298,31 @@ static void pointcloud_process (struct graphics * g, struct trackers * po, uint3
 		if (j > 0)
 		{
 			int32_t randomj = (rand() * j) / RAND_MAX;
+			ASSERT (cluster[randomj] < (int32_t)n);
+			ASSERT (cluster[randomj] >= a);
+			ASSERT (cluster[randomj] <= b);
+			//printf ("%i %i\n", cluster[randomj], randomj);
+			//csc_v3f32_print_rgb (stdout, x + cluster[randomj]);
 			graphics_draw_obj (g, x + cluster[randomj], 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
-			tracker_update (po, x + cluster[randomj]);
+			poitracker_update (tracker, x + cluster[randomj]);
 		}
 
 	}
 
 
-
-	for (uint32_t i = 0; i < PHSYOBJS_CAP; ++i)
+	for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
 	{
-		graphics_draw_obj (g, po->x + i, sqrtf(po->r[i]), (u8rgba){{0xFF, 0xEE, 0x66, 0xFF}});
+		tracker->h[i] += -0.02f;//Reduce intersect hits
+		if (tracker->h[i] < 0.0f)
+		{
+			tracker->h[i] = 0.0f;
+			tracker->r[i] = FLT_MAX;
+		}
+	}
+
+	for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
+	{
+		graphics_draw_obj (g, tracker->x + i, sqrtf(tracker->r[i]), (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
 	}
 
 
