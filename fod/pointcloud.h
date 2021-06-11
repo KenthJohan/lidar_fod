@@ -124,7 +124,7 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
 /**
  * @brief tracker_update1
  * @param h Intersection hits
- * @param r Radiuses
+ * @param r Radiuses in meter^2
  * @param y Tracker positions
  * @param count
  * @param x Detection coordinate
@@ -141,7 +141,7 @@ static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count,
 		{
 			h[i] += 0.2f;//Increase intersect hits
 			h[i] = MIN (h[i], 1.0f);
-			r[i] = 0.2f * 0.2f;
+			r[i] = 0.3f * 0.3f;
 			y[i] = *x;
 			break;
 		}
@@ -153,10 +153,9 @@ static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count,
 		v3f32 d;
 		v3f32_sub (&d, x, y + j);
 		float l2 = v3f32_norm2 (&d);
-		float r2 = r[j];
 		if (j == i) {continue;}
-		if (l2 > r2) {continue;}
-		if (r2 == FLT_MAX) {continue;}
+		if (l2 > (r[j] + r[i])) {continue;}
+		//if (r2 == FLT_MAX) {continue;}
 		r[j] = FLT_MAX;
 		y[j] = (v3f32){{0.0f, 0.0f, 0.0f}};
 		XLOG (XLOG_INF, XLOG_GENERAL, "Merging object tracker %i %i", i, j);
