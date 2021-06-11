@@ -182,6 +182,11 @@ static void graphics_init (nng_socket sock)
 
 u8rgba graphics_cid (uint8_t id)
 {
+	if (id & POINTLABEL_CLUSTER)
+	{
+		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0xFF, .a = 0xFF};
+	}
+
 	if (id & POINTLABEL_OBJ)
 	{
 		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0x66, .a = 0xFF};
@@ -294,6 +299,27 @@ static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3], v3f3
 
 
 
+
+
+static void graphics_draw_obj (struct graphics * g, v3f32 * x, float r, u8rgba color)
+{
+	uint32_t last = g->lines.last;
+	v4f32 * pos = g->lines.pos + last;
+	u8rgba * col = g->lines.col + last;
+	graphicverts_reserve (&g->lines, 6);
+	v4f32_set_xyzw (pos + 0, x->x-r, x->y, x->z, 0.0f);
+	v4f32_set_xyzw (pos + 1, x->x+r, x->y, x->z, 0.0f);
+	v4f32_set_xyzw (pos + 2, x->x, x->y-r, x->z, 0.0f);
+	v4f32_set_xyzw (pos + 3, x->x, x->y+r, x->z, 0.0f);
+	v4f32_set_xyzw (pos + 4, x->x, x->y, x->z-r, 0.0f);
+	v4f32_set_xyzw (pos + 5, x->x, x->y, x->z+r, 0.0f);
+	col[0] = color;
+	col[1] = color;
+	col[2] = color;
+	col[3] = color;
+	col[4] = color;
+	col[5] = color;
+}
 
 
 

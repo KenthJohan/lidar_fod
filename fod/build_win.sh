@@ -4,7 +4,7 @@ gcc fod.c -ofod.exe \
 -D__USE_MINGW_ANSI_STDIO=1 \
 -DNNG_STATIC_LIB \
 -IC:/msys64/mingw64/include \
--I../csc \
+-I../shared/csc \
 -LC:/msys64/mingw64/lib \
 -Wl,-Bstatic \
 -lnng \

@@ -138,12 +138,13 @@ int main (int argc, char const * argv[])
 
 
 	struct graphics g;
-	g.lines.count = 12;
+	g.lines.count = 100;
 	g.points.count = CE30_WH*2;
 	graphics_init (&g, mainarg.address);
 
 	struct trackers tracks;
 	memset (&tracks, 0, sizeof(tracks));
+	vf32_set1 (PHSYOBJS_CAP, tracks.r, FLT_MAX);
 
 	FILE * f = NULL;
 	if (mainarg.filename)

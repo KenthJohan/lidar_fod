@@ -6,6 +6,7 @@
 #include <float.h>
 
 #include "csc_debug.h"
+#include "csc_f32.h"
 #include "csc_m3f32.h"
 #include "csc_m3f32_print.h"
 #include "csc_v3f32.h"
@@ -137,24 +138,41 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
 struct trackers
 {
 	uint32_t count;
+	float r[PHSYOBJS_CAP];
 	v3f32 x[PHSYOBJS_CAP];
-	uint32_t timer[PHSYOBJS_CAP];
+	uint32_t h[PHSYOBJS_CAP];
 };
 
-#define FLT_MAX		__FLT_MAX__
+
 static void tracker_update (struct trackers * po, v3f32 * x)
 {
-	float min = FLT_MAX;
-	uint32_t j = UINT32_MAX;
-	for (uint32_t i = 0; i < PHSYOBJS_CAP; ++i)
+	uint32_t i;
+	for (i = 0; i < PHSYOBJS_CAP; ++i)
 	{
 		v3f32 d;
-		v3f32_sub (&d, po->x + i, x);
-		float l2 = v3f32_norm2 (&d);
-		min = (l2 < min) ? l2 : min;
-		j = i;
+		v3f32_sub (&d, x, po->x + i);
+		if (v3f32_norm2 (&d) < (po->r[i]))
+		{
+			po->h[i]++;
+			po->h[i] = MIN (po->h[i], 10);
+			po->r[i] = 0.2f * 0.2f;
+			po->x[i] = *x;
+			break;
+		}
 	}
-	v3f32_add_mul(po->x + j, po->x + j, x, 0.5f, 0.5f);
+	for (uint32_t j = 0; j < PHSYOBJS_CAP; ++j)
+	{
+		v3f32 d;
+		v3f32_sub (&d, x, po->x + j);
+		float l2 = v3f32_norm2 (&d);
+		float r2 = po->r[j];
+		if (j == i) {continue;}
+		if (l2 > r2) {continue;}
+		if (r2 == FLT_MAX) {continue;}
+		po->r[j] = FLT_MAX;
+		po->x[j] = (v3f32){{0.0f, 0.0f, 0.0f}};
+		XLOG (XLOG_INF, XLOG_GENERAL, "Merging object tracker %i %i", i, j);
+	}
 }
 
 
@@ -189,26 +207,28 @@ static void pointcloud_process (struct graphics * g, struct trackers * po, uint3
 	float const radius = 0.3f;
 
 	v3f32 x1[CE30_WH];
-	v3f32 x2[CE30_WH];
 	uint8_t cid[CE30_WH];
 	memset (cid, 0, sizeof(cid));
 
-	int32_t randomi = (rand() * n) / RAND_MAX;
-	v3f32 const * s = x + randomi;
-	uint32_t m = v3f32_ball (x, n, s, x1, radius);
+	uint32_t m;
+	int32_t randomi;
 
-	//Visual only:
-	for(uint32_t i = 0; i < n; ++i)
 	{
-		v3f32 d;
-		v3f32_sub (&d, x + i, s);
-		if (v3f32_norm2 (&d) < (radius*radius))
+		randomi = (rand() * n) / RAND_MAX;
+		v3f32 const * s = x + randomi;
+		m = v3f32_ball (x, n, s, x1, radius);
+		//Visual only:
+		for(uint32_t i = 0; i < n; ++i)
 		{
-			//Tag this point as part of ball:
-			cid[i] |= POINTLABEL_SEARCH;
+			v3f32 d;
+			v3f32_sub (&d, x + i, s);
+			if (v3f32_norm2 (&d) < (radius*radius))
+			{
+				//Tag this point as part of ball:
+				cid[i] |= POINTLABEL_SEARCH;
+			}
 		}
 	}
-
 
 	v3f32 o = V3F32_ZERO;
 	m3f32 c;
@@ -218,15 +238,20 @@ static void pointcloud_process (struct graphics * g, struct trackers * po, uint3
 	v3f32_subv (x1, x1, &o, 1, 1, 0, m);
 	pointcloud_covariance (x1, m, &c, 1.0f);
 	pointcloud_eigen (&c, e, w);
+	//if ((2.0f*w[0] > w[1])){return;}
 	pointcloud_conditional_basis_flip (e);
-	v3f32_subv (x2, x, &o, 1, 1, 0, n);
-	pointcloud_rotate ((m3f32 *)e, x2, x1, n); // (x1) := e (x2)
 
-	XLOG (XLOG_INF, XLOG_GENERAL, "%f", w[0]);
+	{
+		v3f32 x2[CE30_WH];
+		v3f32_subv (x2, x, &o, 1, 1, 0, n);
+		pointcloud_rotate ((m3f32 *)e, x2, x1, n); // (x1) := e (x2)
+	}
+
+	XLOG (XLOG_INF, XLOG_GENERAL, "%f", sqrt(w[0]));//0.000985
 
 	//Check if PCA is formed by a planar pointcloud:
 	//w[0] = Shortest, w[1] = Medium, w[2] = Farthest.
-	if ((2.0f*w[0] < w[1]))
+	if ((3.0f*w[0] < w[1]))
 	{
 		//Classify objects within circle sector at ball location:
 		//  0     a   r    b    n
@@ -238,23 +263,39 @@ static void pointcloud_process (struct graphics * g, struct trackers * po, uint3
 		int32_t const arclength = 600;
 		int32_t a = MAX(randomi - arclength, 0);
 		int32_t b = MIN(randomi + arclength, CE30_WH);
-		v3f32 mean = V3F32_ZERO;
-		uint32_t n = 0;
-		for (int32_t i = a; i < b; ++i)
+		int32_t cluster[CLUSTER_CAPACITY];
+		uint32_t j = 0;
+		for (int32_t i = a; (i < b) && (j < CLUSTER_CAPACITY); ++i)
 		{
 			cid[i] |= POINTLABEL_SECTOR;
 			//Label points that is far above ground
 			if (x1[i].x < sqrtf(w[0])*DISTANCE_ABOVE_GROUND) {continue;}
 			cid[i] |= POINTLABEL_OBJ;
-			v3f32_add (&mean, &mean, x + i);
-			n++;
+			cluster[j] = i;
+			j++;
 		}
-		v3f32_mul (&mean, &mean, 1.0f / n);
-		tracker_update (po, &mean);
+
+		if (j > 0)
+		{
+			int32_t randomj = (rand() * j) / RAND_MAX;
+			graphics_draw_obj (g, x + cluster[randomj], 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
+			tracker_update (po, x + cluster[randomj]);
+		}
+
 	}
+
+
+
+	for (uint32_t i = 0; i < PHSYOBJS_CAP; ++i)
+	{
+		graphics_draw_obj (g, po->x + i, sqrtf(po->r[i]), (u8rgba){{0xFF, 0xEE, 0x66, 0xFF}});
+	}
+
+
 	graphics_draw_pointcloud (g, n, x, a, cid);
 	graphics_draw_pointcloud (g, n, x1, NULL, NULL);
 	graphics_draw_pca (g, e, w, &o);
+	//graphics_draw_obj (g, po->x);
 	graphics_flush (g);
 
 }
