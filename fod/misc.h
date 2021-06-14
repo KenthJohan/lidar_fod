@@ -30,7 +30,7 @@
 #endif
 
 #define DISTANCE_ABOVE_GROUND 6.0f
-#define CLUSTER_CAPACITY 128
+#define POINTS_IN_BALL_REQUIREMENT 300
 
 #define POINTLABEL_CLUSTER 0x08 //This is a cluster
 #define POINTLABEL_OBJ 0x04 //This is a objects

@@ -194,19 +194,19 @@ u8rgba graphics_cid (uint8_t id)
 
 	if (id & POINTLABEL_SEARCH)
 	{
-		return (u8rgba) {.r = 0xCC, .g = 0xCC, .b = 0xCC, .a = 0xFF};
+		return (u8rgba) {.r = 0xBB, .g = 0xBB, .b = 0xBB, .a = 0xFF};
 	}
 
 	if (id & POINTLABEL_SECTOR)
 	{
-		return (u8rgba) {.r = 0x99, .g = 0x55, .b = 0x99, .a = 0xFF};
+		return (u8rgba) {.r = 0x66, .g = 0x66, .b = 0x66, .a = 0xFF};
 	}
 
 	return (u8rgba) {.r = 0x00, .g = 0x00, .b = 0x00, .a = 0xFF};
 }
 
 
-static void graphics_draw_pointcloud_cid (struct graphics * g, uint32_t n, v3f32 x[], uint8_t cid[])
+static void graphics_draw_pointcloud_cid (struct graphics * g, uint32_t n, v3f32 const x[], uint8_t const cid[])
 {
 	uint32_t last = g->points.last;
 	v4f32 * pos = g->points.pos + last;
@@ -224,7 +224,7 @@ static void graphics_draw_pointcloud_cid (struct graphics * g, uint32_t n, v3f32
 }
 
 
-static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f32 x[], float a[])
+static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f32 const x[], float const a[])
 {
 	uint32_t last = g->points.last;
 	v4f32 * pos = g->points.pos + last;

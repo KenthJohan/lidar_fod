@@ -137,11 +137,12 @@ static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count,
 	{
 		v3f32 d;
 		v3f32_sub (&d, x, y + i);
-		if (v3f32_norm2 (&d) < r[i])
+		float r2 = r[i] * r[i];
+		if (v3f32_norm2 (&d) < r2)
 		{
 			h[i] += 0.2f;//Increase intersect hits
 			h[i] = MIN (h[i], 1.0f);
-			r[i] = 0.3f * 0.3f;
+			r[i] = 0.3f;
 			y[i] = *x;
 			break;
 		}
@@ -155,7 +156,10 @@ static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count,
 		float l2 = v3f32_norm2 (&d);
 		if (j == i) {continue;}
 		if (r[j] == FLT_MAX) {continue;}
-		if (l2 > (r[j] + r[i])) {continue;}
+		// Check if two ball with different radius intersects:
+		// (a+b)^2 = a^2 + b^2 + 2ab
+		float r2 = r[j]*r[j] + r[i]*r[i] + 2.0f*r[i]*r[j];
+		if (l2 > r2) {continue;}
 		r[j] = FLT_MAX;
 		y[j] = (v3f32){{0.0f, 0.0f, 0.0f}};
 		XLOG (XLOG_INF, XLOG_GENERAL, "Merging object tracker %i %i", i, j);
@@ -221,7 +225,7 @@ static void poitracker_update (struct poitracker * tracker, v3f32 * x)
 
 //Maximize n and minimize h
 
-static void pointcloud_process (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], float a[])
+static void pointcloud_process (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], float amp[])
 {
 	float const radius = 0.3f;
 
@@ -236,6 +240,8 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 		randomi = (rand() * n) / RAND_MAX;
 		v3f32 const * s = x + randomi;
 		m = v3f32_ball (x, n, s, x1, radius);
+		//XLOG (XLOG_INF, XLOG_GENERAL, "%i", m);
+
 		//Visual only:
 		for(uint32_t i = 0; i < n; ++i)
 		{
@@ -266,11 +272,12 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 		pointcloud_rotate ((m3f32 *)e, x2, x1, n); // (x1) := e (x2)
 	}
 
-	XLOG (XLOG_INF, XLOG_GENERAL, "%f", sqrt(w[0]));//0.000985
+	//XLOG (XLOG_INF, XLOG_GENERAL, "%f", sqrt(w[0]));//0.000985
 
 	//Check if PCA is formed by a planar pointcloud:
 	//w[0] = Shortest, w[1] = Medium, w[2] = Farthest.
-	if ((3.0f*w[0] < w[1]))
+	printf ("ball=%i, w=(%f,%f,%f)\n", m, w[0], w[1], w[2]);
+	if ((3.0f*w[0] < w[1]) && (m > POINTS_IN_BALL_REQUIREMENT))
 	{
 		//Classify objects within circle sector at ball location:
 		//  0     a   r    b    n
@@ -282,28 +289,28 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 		int32_t const arclength = 600;
 		int32_t a = MAX(randomi - arclength, 0);
 		int32_t b = MIN(randomi + arclength, (int32_t)n);
-		int32_t cluster[CLUSTER_CAPACITY];
+		int32_t iobj[CE30_WH];
 		uint32_t j = 0;
-		for (int32_t i = a; (i < b) && (j < CLUSTER_CAPACITY); ++i)
+		for (int32_t i = a; i < b; ++i)
 		{
 			cid[i] |= POINTLABEL_SECTOR;
 			//Label points that is far above ground
 			if (x1[i].x < sqrtf(w[0])*DISTANCE_ABOVE_GROUND) {continue;}
 			cid[i] |= POINTLABEL_OBJ;
-			cluster[j] = i;
+			iobj[j] = i;
 			j++;
 		}
 
 		if (j > 0)
 		{
 			int32_t randomj = (rand() * j) / RAND_MAX;
-			ASSERT (cluster[randomj] < (int32_t)n);
-			ASSERT (cluster[randomj] >= a);
-			ASSERT (cluster[randomj] <= b);
+			ASSERT (iobj[randomj] < (int32_t)n);
+			ASSERT (iobj[randomj] >= a);
+			ASSERT (iobj[randomj] <= b);
 			//printf ("%i %i\n", cluster[randomj], randomj);
 			//csc_v3f32_print_rgb (stdout, x + cluster[randomj]);
-			graphics_draw_obj (g, x + cluster[randomj], 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
-			poitracker_update (tracker, x + cluster[randomj]);
+			graphics_draw_obj (g, x + iobj[randomj], 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
+			poitracker_update (tracker, x + iobj[randomj]);
 		}
 
 	}
@@ -319,16 +326,17 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 		}
 	}
 
+
+
 	for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
 	{
-		graphics_draw_obj (g, tracker->x + i, sqrtf(tracker->r[i]), (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
+		graphics_draw_obj (g, tracker->x + i, tracker->r[i], (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
 	}
 
-
 	graphics_draw_pointcloud_cid (g, n, x, cid);
-	graphics_draw_pointcloud_alpha (g, n, x1, a);
+	graphics_draw_pointcloud_alpha (g, n, x1, amp);
 	graphics_draw_pca (g, e, w, &o);
-	//graphics_draw_obj (g, po->x);
+	graphics_draw_obj (g, x + randomi, 0.1f, (u8rgba){{0x99, 0x33, 0xFF, 0xFF}});
 	graphics_flush (g);
 
 }
