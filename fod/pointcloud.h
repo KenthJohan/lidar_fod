@@ -154,8 +154,8 @@ static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count,
 		v3f32_sub (&d, x, y + j);
 		float l2 = v3f32_norm2 (&d);
 		if (j == i) {continue;}
+		if (r[j] == FLT_MAX) {continue;}
 		if (l2 > (r[j] + r[i])) {continue;}
-		//if (r2 == FLT_MAX) {continue;}
 		r[j] = FLT_MAX;
 		y[j] = (v3f32){{0.0f, 0.0f, 0.0f}};
 		XLOG (XLOG_INF, XLOG_GENERAL, "Merging object tracker %i %i", i, j);
@@ -325,8 +325,8 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 	}
 
 
-	graphics_draw_pointcloud (g, n, x, a, cid);
-	graphics_draw_pointcloud (g, n, x1, NULL, NULL);
+	graphics_draw_pointcloud_cid (g, n, x, cid);
+	graphics_draw_pointcloud_alpha (g, n, x1, a);
 	graphics_draw_pca (g, e, w, &o);
 	//graphics_draw_obj (g, po->x);
 	graphics_flush (g);

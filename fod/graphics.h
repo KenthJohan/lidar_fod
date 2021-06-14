@@ -206,51 +206,47 @@ u8rgba graphics_cid (uint8_t id)
 }
 
 
-static void graphics_draw_pointcloud (struct graphics * g, uint32_t n, v3f32 x[], float a[], uint8_t cid[])
+static void graphics_draw_pointcloud_cid (struct graphics * g, uint32_t n, v3f32 x[], uint8_t cid[])
 {
 	uint32_t last = g->points.last;
 	v4f32 * pos = g->points.pos + last;
 	u8rgba * col = g->points.col + last;
 	graphicverts_reserve (&g->points, n);
+	for (uint32_t i = 0; i < n; ++i)
+	{
+			col[i] = graphics_cid(cid[i]);
+			col[i].a = 0xFF;
+			pos[i].w = 10.0f;
+			pos[i].x = x[i].x;
+			pos[i].y = x[i].y;
+			pos[i].z = x[i].z;
+	}
+}
 
-	//Set color
+
+static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f32 x[], float a[])
+{
+	uint32_t last = g->points.last;
+	v4f32 * pos = g->points.pos + last;
+	u8rgba * col = g->points.col + last;
+	graphicverts_reserve (&g->points, n);
 	for (uint32_t i = 0; i < n; ++i)
 	{
 		float w;
-		if (a)
-		{
-			w = CLAMP(a[i] * 4.0f, 0.0f, 255.0f);
-		}
-		else
-		{
-			w = 255.0f;
-		}
-		if (cid)
-		{
-			col[i] = graphics_cid(cid[i]);
-			col[i].a = 0xFF;
-		}
-		else
-		{
-			col[i].r = (uint8_t)(w);
-			col[i].g = (uint8_t)(w);
-			col[i].b = (uint8_t)(w);
-			col[i].a = 0xFF;
-		}
-		//struct csc_u8rgba c = {.r = 0x44, .g = 0x44, .b = 0x44, .a = 0xFF};
-		//pointcol[i] = c;
-	}
-
-
-	for (uint32_t i = 0; i < n; ++i)
-	{
+		w = CLAMP(a[i] * 4.0f, 0.0f, 255.0f);
+		col[i].r = (uint8_t)(w);
+		col[i].g = (uint8_t)(w);
+		col[i].b = (uint8_t)(w);
+		col[i].a = 0xFF;
 		pos[i].w = 10.0f;
 		pos[i].x = x[i].x;
 		pos[i].y = x[i].y;
 		pos[i].z = x[i].z;
 	}
-
 }
+
+
+
 
 
 
