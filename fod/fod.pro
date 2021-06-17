@@ -34,7 +34,7 @@ HEADERS += csc_qf32.h
 HEADERS += csc_xlog.h
 
 
-INCLUDEPATH += ../shared/csc
+INCLUDEPATH += ../shared
 INCLUDEPATH += C:/msys64/mingw64/include
 
 LIBS += -LC:/msys64/mingw64/lib

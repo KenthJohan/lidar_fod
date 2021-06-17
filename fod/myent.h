@@ -16,5 +16,12 @@ enum myent
 
 
 	MYENT_DRAW_LINES,
+
+
+	MYENT_TEXT0,
+	MYENT_TEXT_LAST = MYENT_TEXT0 + 10,
+
+
+	MYENT_COUNT
 };
 

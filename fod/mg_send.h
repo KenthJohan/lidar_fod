@@ -1,7 +1,7 @@
 #pragma once
 
-#include "csc_debug.h"
-#include "csc_debug_nng.h"
+#include "csc/csc_debug.h"
+#include "csc/csc_debug_nng.h"
 
 #include <nng/nng.h>
 #include <nng/protocol/pair0/pair.h>
@@ -19,7 +19,7 @@ static void mg_pairdial (nng_socket * sock, char const * address)
 }
 
 
-static void mg_send_set (nng_socket sock, uint32_t entity, uint32_t attribute, void * ptr, size_t size)
+static void mg_send_set (nng_socket sock, uint32_t entity, uint32_t attribute, void const * ptr, size_t size)
 {
 	nng_msg * msg;
 	nng_msg_alloc (&msg, 0);

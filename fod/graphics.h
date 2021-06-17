@@ -2,14 +2,14 @@
 
 #include <stdio.h>
 
-#include "csc_debug_nng.h"
-#include "csc_math.h"
-#include "csc_linmat.h"
-#include "csc_m3f32.h"
-#include "csc_m3f32_print.h"
-#include "csc_v3f32_print.h"
-#include "csc_vu32.h"
-#include "csc_rgb.h"
+#include "csc/csc_debug_nng.h"
+#include "csc/csc_math.h"
+#include "csc/csc_linmat.h"
+#include "csc/csc_m3f32.h"
+#include "csc/csc_m3f32_print.h"
+#include "csc/csc_v3f32_print.h"
+#include "csc/csc_vu32.h"
+#include "csc/csc_rgb.h"
 
 #include "../shared/shared.h"
 #include "../shared/ce30.h"
@@ -91,10 +91,10 @@ static void graphics_init (struct graphics * g, char const * address)
 	mg_send_add (sock, MYENT_DRAW_LINES, MG_LINES);
 
 	{
-		component_count points_count = g->points.count;
-		component_count lines_count = g->lines.count;
-		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_CAPACITY, &points_count, sizeof(component_count));
-		mg_send_set (sock, MYENT_DRAW_LINES, MG_CAPACITY, &lines_count, sizeof(component_count));
+		Capacity points_count = g->points.count;
+		Capacity lines_count = g->lines.count;
+		mg_send_set (sock, MYENT_DRAW_CLOUD, MG_CAPACITY, &points_count, sizeof(Capacity));
+		mg_send_set (sock, MYENT_DRAW_LINES, MG_CAPACITY, &lines_count, sizeof(Capacity));
 	}
 
 	{
@@ -114,6 +114,9 @@ static void graphics_init (struct graphics * g, char const * address)
 		mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_COL, col, sizeof(col));
 		mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, lines, sizeof(lines));
 	}
+
+
+
 }
 
 
@@ -317,6 +320,16 @@ static void graphics_draw_obj (struct graphics * g, v3f32 * x, float r, u8rgba c
 	col[5] = color;
 }
 
+
+
+
+static void graphics_draw_text (struct graphics * g, int i, Position3 * p, char const * text)
+{
+	Scale2 s = {{0.005f, 0.005f}};
+	mg_send_set (g->sock, MYENT_TEXT0 + i, MG_SCALE2, &s, sizeof (Scale2));
+	mg_send_set (g->sock, MYENT_TEXT0 + i, MG_POSITION3, p, sizeof (Position3));
+	mg_send_set (g->sock, MYENT_TEXT0 + i, MG_TEXT, text, strlen (text));
+}
 
 
 

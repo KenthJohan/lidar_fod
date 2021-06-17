@@ -5,14 +5,14 @@
 #include <stdio.h>
 #include <float.h>
 
-#include "csc_debug.h"
-#include "csc_f32.h"
-#include "csc_m3f32.h"
-#include "csc_m3f32_print.h"
-#include "csc_v3f32.h"
-#include "csc_v3f32_print.h"
-#include "csc_v4f32.h"
-#include "csc_xlog.h"
+#include "csc/csc_debug.h"
+#include "csc/csc_f32.h"
+#include "csc/csc_m3f32.h"
+#include "csc/csc_m3f32_print.h"
+#include "csc/csc_v3f32.h"
+#include "csc/csc_v3f32_print.h"
+#include "csc/csc_v4f32.h"
+#include "csc/csc_xlog.h"
 
 #include "../shared/shared.h"
 #include "../shared/ce30.h"
@@ -331,7 +331,13 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 	for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
 	{
 		graphics_draw_obj (g, tracker->x + i, tracker->r[i], (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
+		char buf[10];
+		snprintf(buf, 10, "%4.2f", tracker->h[i]);
+		graphics_draw_text (g, i, tracker->x + i, buf);
 	}
+
+
+
 
 	graphics_draw_pointcloud_cid (g, n, x, cid);
 	graphics_draw_pointcloud_alpha (g, n, x1, amp);

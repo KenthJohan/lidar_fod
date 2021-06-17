@@ -1,44 +1,82 @@
 #pragma once
 
-#include "csc_math.h"
-#include "csc_qf32.h"
+#include "csc/csc_math.h"
+#include "csc/csc_qf32.h"
 
-typedef uint32_t component_tbo;
-typedef uint32_t component_color;
-typedef v4f32 component_position;
-typedef v4f32 component_scale;
-typedef qf32 component_quaternion;
-typedef v4f32 component_applyrotation;
-typedef v2f32 component_uv;
-typedef v2f32 component_rectangle;
-typedef m4f32 component_transform;
-typedef struct component_controller
-{
-	const uint8_t * keyboard; //SDL Keyboard
-} component_controller;
-typedef struct component_texture
+//Spatial
+typedef uint32_t Color;
+typedef v3f32 Position3;
+typedef v4f32 Position4;
+typedef v4f32 Scale4;
+typedef v4f32 Scale3;
+typedef v4f32 Scale2;
+typedef qf32 Quaternion;
+typedef qf32 QuaternionDelta;
+typedef m4f32 Transform;
+
+//Geometry
+typedef v2f32 TextureUV;
+typedef v2f32 Rectangle2f;
+
+
+//OpenGL
+typedef struct GL_Texture
 {
 	uint32_t unit;
 	uint32_t width;
 	uint32_t height;
 	uint32_t depth;
-} component_texture;
-typedef struct component_pointcloud
+} GL_Texture;
+
+typedef struct GL_Pointcloud
 {
 	uint32_t vao;
 	uint32_t vboc;
 	uint32_t vbop;
-} component_pointcloud;
-typedef struct component_mesh
+} GL_Pointcloud;
+
+typedef struct GL_Mesh
 {
 	uint32_t vbop;
 	uint32_t vbot;
-} component_mesh;
-typedef uint32_t component_vbo;
-typedef uint32_t component_va;
-typedef uint32_t component_stride;
-typedef uint32_t component_count;
-typedef uint32_t component_vao;
+} GL_Mesh;
+
+typedef struct GL_Lines
+{
+	uint32_t vao;
+	uint32_t vbop;
+	uint32_t vboc;
+} GL_Lines;
+
+typedef uint32_t GL_VertexBufferObject;
+typedef uint32_t GL_VertexArrayObject;
+typedef uint32_t GL_Tex2DArray;//glGenTextures, GL_TEXTURE_2D_ARRAY
+typedef int32_t GL_Program;
+typedef int32_t GL_Shader;
+
+
+//Array
+typedef uint32_t Stride;
+typedef uint32_t Capacity;
+typedef uint32_t Count;
+typedef uint32_t Offset;
+typedef char Filename[256];
+typedef struct Text
+{
+	char const * value;
+} Text;
+
+
+
+//SDL:
+typedef struct SDL_Keyboard
+{
+	const uint8_t * keyboard; //SDL Keyboard
+} SDL_Keyboard;
+
+
+
+
 
 
 

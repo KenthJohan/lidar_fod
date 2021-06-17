@@ -17,10 +17,10 @@
 
 #include <stdint.h>
 
-#include "csc_math.h"
-#include "csc_v3f32.h"
-#include "csc_v4f32.h"
-#include "csc_m3f32.h"
+#include "csc/csc_math.h"
+#include "csc/csc_v3f32.h"
+#include "csc/csc_v4f32.h"
+#include "csc/csc_m3f32.h"
 #include "../shared/shared.h"
 #include "../shared/ce30.h"
 
