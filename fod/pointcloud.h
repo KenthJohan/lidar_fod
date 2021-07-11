@@ -142,17 +142,29 @@ static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count,
 		{
 			h[i] += 0.2f;//Increase intersect hits
 			h[i] = MIN (h[i], 1.0f);
-			r[i] = 0.3f;
+			r[i] = 0.2f;
 			y[i] = *x;
+			printf ("d = %f\n", v3f32_norm (&d));
+
+			if (v3f32_norm (&d) < 1.0f)
+			{
+				//y[i].z += 1.0f;
+				v3f32_mul (&d, &d, -0.5f);
+				v3f32_add (y + i, y + i, &d); //y := y + d, y is point, d is vector
+			}
+
 			break;
 		}
 	}
 
 	//Merge trackers if their sphere intersects:
+	//i is old tracker
+	//Compare old tracker (i) and with every tracker (j)
+	//If i and j intersects remove (j)
 	for (uint32_t j = 0; j < count; ++j)
 	{
 		v3f32 d;
-		v3f32_sub (&d, x, y + j);
+		v3f32_sub (&d, y + i, y + j); //d := y[i] - y[j]
 		float l2 = v3f32_norm2 (&d);
 		if (j == i) {continue;}
 		if (r[j] == FLT_MAX) {continue;}
@@ -160,6 +172,7 @@ static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count,
 		// (a+b)^2 = a^2 + b^2 + 2ab
 		float r2 = r[j]*r[j] + r[i]*r[i] + 2.0f*r[i]*r[j];
 		if (l2 > r2) {continue;}
+
 		r[j] = FLT_MAX;
 		y[j] = (v3f32){{0.0f, 0.0f, 0.0f}};
 		XLOG (XLOG_INF, XLOG_GENERAL, "Merging object tracker %i %i", i, j);
@@ -276,7 +289,7 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 
 	//Check if PCA is formed by a planar pointcloud:
 	//w[0] = Shortest, w[1] = Medium, w[2] = Farthest.
-	printf ("ball=%i, w=(%f,%f,%f)\n", m, w[0], w[1], w[2]);
+	printf ("ball=%i, w=(%f,%f,%f) ratio:%f\n", m, w[0], w[1], w[2], w[1] / w[0]);
 	if ((3.0f*w[0] < w[1]) && (m > POINTS_IN_BALL_REQUIREMENT))
 	{
 		//Classify objects within circle sector at ball location:
