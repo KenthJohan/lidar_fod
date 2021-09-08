@@ -128,8 +128,9 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
  * @param y Tracker positions
  * @param count
  * @param x Detection coordinate
+ * @return The index of tracker that got updated
  */
-static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count, v3f32 const * x)
+static uint32_t poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count, v3f32 const * x)
 {
 	//Check if (x) is inside a existing tracker sphere:
 	uint32_t i;
@@ -157,12 +158,21 @@ static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count,
 		}
 	}
 
+	if (i >= count)
+	{
+		return count;
+	}
+
 	//Merge trackers if their sphere intersects:
 	//i is old tracker
 	//Compare old tracker (i) and with every tracker (j)
 	//If i and j intersects remove (j)
 	for (uint32_t j = 0; j < count; ++j)
 	{
+		if ((j >= 5) || (i >= 5))
+		{
+			printf ("Hello!\n");
+		}
 		v3f32 d;
 		v3f32_sub (&d, y + i, y + j); //d := y[i] - y[j]
 		float l2 = v3f32_norm2 (&d);
@@ -173,10 +183,12 @@ static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count,
 		float r2 = r[j]*r[j] + r[i]*r[i] + 2.0f*r[i]*r[j];
 		if (l2 > r2) {continue;}
 
-		r[j] = FLT_MAX;
-		y[j] = (v3f32){{0.0f, 0.0f, 0.0f}};
+		r[i] = FLT_MAX;
+		y[i] = (v3f32){{0.0f, 0.0f, 0.0f}};
 		XLOG (XLOG_INF, XLOG_GENERAL, "Merging object tracker %i %i", i, j);
 	}
+
+	return i;
 }
 
 
@@ -192,10 +204,11 @@ static void poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count,
 #define POITRACKER_CAPACITY 5
 struct poitracker
 {
-	uint32_t count;
-	float r[POITRACKER_CAPACITY];
-	v3f32 x[POITRACKER_CAPACITY];
-	float h[POITRACKER_CAPACITY];
+	uint32_t count;//Not used currently
+	float r[POITRACKER_CAPACITY];//Radius
+	v3f32 x[POITRACKER_CAPACITY];//Position
+	float h[POITRACKER_CAPACITY];//History
+	uint32_t i[POITRACKER_CAPACITY];//Pointcloud Index
 };
 
 static void poitracker_init (struct poitracker * tracker)
@@ -206,15 +219,15 @@ static void poitracker_init (struct poitracker * tracker)
 }
 
 
-static void poitracker_update (struct poitracker * tracker, v3f32 * x)
+static void poitracker_update (struct poitracker * tracker, v3f32 * x, int32_t randomi)
 {
-	poitracker_update1 (tracker->h, tracker->r, tracker->x, POITRACKER_CAPACITY, x);
+	uint32_t i = poitracker_update1 (tracker->h, tracker->r, tracker->x, POITRACKER_CAPACITY, x);
+	if(i < POITRACKER_CAPACITY)
+	{
+		tracker->i[i] = randomi;
+		printf ("tracker %i got updated. count: %i\n", i, POITRACKER_CAPACITY);
+	}
 }
-
-
-
-
-
 
 
 
@@ -238,7 +251,7 @@ static void poitracker_update (struct poitracker * tracker, v3f32 * x)
 
 //Maximize n and minimize h
 
-static void pointcloud_process (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], float amp[])
+static void pointcloud_process1 (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], float amp[], int32_t randomi, v3f32 const * s)
 {
 	float const radius = 0.3f;
 
@@ -247,11 +260,12 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 	memset (cid, 0, sizeof(cid));
 
 	uint32_t m;
-	int32_t randomi;
+	//int32_t randomi;
 
 	{
-		randomi = (rand() * n) / RAND_MAX;
-		v3f32 const * s = x + randomi;
+		//Sample random point in pointcloud
+		//randomi = (rand() * n) / RAND_MAX;
+		//v3f32 const * s = x + randomi;
 		m = v3f32_ball (x, n, s, x1, radius);
 		//XLOG (XLOG_INF, XLOG_GENERAL, "%i", m);
 
@@ -322,12 +336,62 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 			ASSERT (iobj[randomj] <= b);
 			//printf ("%i %i\n", cluster[randomj], randomj);
 			//csc_v3f32_print_rgb (stdout, x + cluster[randomj]);
-			graphics_draw_obj (g, x + iobj[randomj], 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
-			poitracker_update (tracker, x + iobj[randomj]);
+			if (g)
+			{
+				graphics_draw_obj (g, x + iobj[randomj], 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
+			}
+			poitracker_update (tracker, x + iobj[randomj], randomi);
 		}
 
 	}
 
+
+
+
+
+
+	if (g)
+	{
+		for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
+		{
+			char buf[10];
+			snprintf(buf, 10, "%i:%4.2f", i, tracker->h[i]);
+			graphics_draw_obj (g, tracker->x + i, tracker->r[i], (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
+			graphics_draw_text (g, i, tracker->x + i, buf);
+
+		}
+	}
+
+
+
+	if (g)
+	{
+		graphics_draw_pointcloud_cid (g, n, x, cid);
+		graphics_draw_pointcloud_alpha (g, n, x1, amp);
+		graphics_draw_pca (g, e, w, &o);
+		graphics_draw_obj (g, x + randomi, 0.1f, (u8rgba){{0x99, 0x33, 0xFF, 0xFF}});
+		graphics_flush (g);
+	}
+}
+
+
+
+
+
+static void pointcloud_process (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], float amp[])
+{
+	int32_t randomi = (rand() * n) / RAND_MAX;
+	v3f32 const * s = x + randomi;
+	pointcloud_process1 (g, tracker, n, x, amp, randomi, s);
+	for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
+	{
+		if (tracker->h[i] > 0.20f)
+		{
+			getchar();
+			printf ("Recheck tracker %i\n", i);
+			pointcloud_process1 (g, tracker, n, x, amp, tracker->i[i], x + tracker->i[i]);
+		}
+	}
 
 	for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
 	{
@@ -339,32 +403,7 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 		}
 	}
 
-
-
-	for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
-	{
-		graphics_draw_obj (g, tracker->x + i, tracker->r[i], (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
-		char buf[10];
-		snprintf(buf, 10, "%4.2f", tracker->h[i]);
-		graphics_draw_text (g, i, tracker->x + i, buf);
-	}
-
-
-
-
-	graphics_draw_pointcloud_cid (g, n, x, cid);
-	graphics_draw_pointcloud_alpha (g, n, x1, amp);
-	graphics_draw_pca (g, e, w, &o);
-	graphics_draw_obj (g, x + randomi, 0.1f, (u8rgba){{0x99, 0x33, 0xFF, 0xFF}});
-	graphics_flush (g);
-
 }
-
-
-
-
-
-
 
 
 
