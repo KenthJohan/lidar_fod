@@ -358,7 +358,6 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 			snprintf(buf, 10, "%i:%4.2f", i, tracker->h[i]);
 			graphics_draw_obj (g, tracker->x + i, tracker->r[i], (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
 			graphics_draw_text (g, i, tracker->x + i, buf);
-
 		}
 	}
 
@@ -387,8 +386,8 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 	{
 		if (tracker->h[i] > 0.20f)
 		{
-			getchar();
-			printf ("Recheck tracker %i\n", i);
+			//getchar();
+			//printf ("Recheck tracker %i\n", i);
 			pointcloud_process1 (g, tracker, n, x, amp, tracker->i[i], x + tracker->i[i]);
 		}
 	}
