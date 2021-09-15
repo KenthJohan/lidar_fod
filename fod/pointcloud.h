@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <float.h>
 
-#include "csc/csc_debug.h"
+#include "csc/csc_assert.h"
 #include "csc/csc_f32.h"
 #include "csc/csc_m3f32.h"
 #include "csc/csc_m3f32_print.h"

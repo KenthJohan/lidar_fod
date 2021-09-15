@@ -29,7 +29,7 @@
 #include "csc/csc_qf32.h"
 #include "csc/csc_filecopy.h"
 #include "csc/csc_argv.h"
-#include "csc/csc_debug.h"
+#include "csc/csc_assert.h"
 #include "csc/csc_xlog.h"
 
 #include "../shared/shared.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "csc/csc_debug.h"
+#include "csc/csc_assert.h"
 #include "csc/csc_debug_nng.h"
 
 #include <nng/nng.h>

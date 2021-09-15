@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "csc/csc_math.h"
 #include "csc/csc_v3f32.h"
-#include "csc/csc_debug.h"
+#include "csc/csc_assert.h"
 
 #define CE30_W 320
 #define CE30_H 20
