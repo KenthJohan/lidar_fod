@@ -7,6 +7,7 @@
 #include "csc/csc_v3f32.h"
 #include "csc/csc_xlog.h"
 #include "csc/csc_v3f32_print.h"
+#include "csc/csc_math.h"
 
 #include "../shared/shared.h"
 #include "misc.h"
