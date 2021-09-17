@@ -284,6 +284,7 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 		{
 			return;
 		}
+		//XLOG (XLOG_INF, XLOG_GENERAL, "randomi %i", randomi);
 	}
 
 
@@ -309,7 +310,7 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 
 	//Check if PCA is formed by a planar pointcloud:
 	//w[0] = Shortest, w[1] = Medium, w[2] = Farthest.
-	printf ("ball=%i, w=(%f,%f,%f) ratio:%f\n", m, w[0], w[1], w[2], w[1] / w[0]);
+	//printf ("ball=%i, w=(%f,%f,%f) ratio:%f\n", m, w[0], w[1], w[2], w[1] / w[0]);
 	if ((3.0f*w[0] < w[1]) && (m > POINTS_IN_BALL_REQUIREMENT))
 	{
 		//Classify objects within circle sector at ball location:
