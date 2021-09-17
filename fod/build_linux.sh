@@ -1,4 +1,4 @@
-gcc fod.c -ofod \
+gcc fod.c flecs.c -ofod \
 -I../shared/csc \
 -DNNG_STATIC_LIB \
 -lnng \
