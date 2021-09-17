@@ -129,6 +129,32 @@ void loop_file (struct poitracker * pc, struct graphics * g, FILE * f)
 
 
 
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+} position_v3f32;
+
+typedef struct
+{
+	float r;
+} radius_f32;
+
+typedef struct
+{
+	uint32_t i;
+} index_u32;
+
+typedef struct
+{
+	float v;
+} trackerhits_f32;
+
+ECS_COMPONENT_DECLARE(position_v3f32);
+ECS_COMPONENT_DECLARE(radius_f32);
+ECS_COMPONENT_DECLARE(index_u32);
+ECS_COMPONENT_DECLARE(trackerhits_f32);
 
 
 
@@ -137,9 +163,14 @@ void loop_file (struct poitracker * pc, struct graphics * g, FILE * f)
 
 int main (int argc, char const * argv[])
 {
-	setbuf(stdout, NULL);
 	UNUSED (argc);
+	setbuf(stdout, NULL);
 	csc_crossos_enable_ansi_color();
+	ecs_world_t * world = ecs_init();
+	ECS_COMPONENT_DEFINE(world, position_v3f32);
+	ECS_COMPONENT_DEFINE(world, radius_f32);
+	ECS_COMPONENT_DEFINE(world, index_u32);
+	ECS_COMPONENT_DEFINE(world, trackerhits_f32);
 
 	mainarg.address = "tcp://localhost:9002";
 	mainarg.filename = NULL;

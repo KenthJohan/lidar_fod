@@ -67,13 +67,17 @@ mingw32-make install
 
 
 ## Installing on Linux
-```
+```bash
+sudo apt install build-essential
 sudo apt-get install libblas-dev
 sudo apt-get install libcblas-dev
+sudo apt-get install libatlas-base-dev
 sudo apt-get install liblapacke-dev
+sudo apt-get install libboost-all-dev
 
 sudo apt-get install cmake
 git clone https://github.com/nanomsg/nng
+cd nng
 mkdir build
 cd build
 sudo cmake ..
@@ -81,6 +85,10 @@ sudo make
 sudo make test
 sudo make install
 sudo ldconfig
+```
 
 
+## Example
+```bash
+ce30_recorder -s | ./fod -i -a tcp://192.168.1.176:9002
 ```

@@ -10,7 +10,7 @@ DEFINES += NNG_STATIC_LIB
 QMAKE_CFLAGS += -Wno-unused-function
 QMAKE_CFLAGS += -Wno-unused-parameter
 
-SOURCES += fod.c
+SOURCES += fod.c flecs.c
 
 HEADERS += calculation.h
 HEADERS += myent.h

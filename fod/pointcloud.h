@@ -19,6 +19,7 @@
 
 #include "misc.h"
 #include "graphics.h"
+#include "flecs.h"
 
 
 
@@ -290,6 +291,7 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 	v3f32_subv (x1, x1, &o, 1, 1, 0, m);
 	pointcloud_covariance (x1, m, &c, 1.0f);
 	pointcloud_eigen (&c, e, w);
+
 	//if ((2.0f*w[0] > w[1])){return;}
 	pointcloud_conditional_basis_flip (e);
 
@@ -388,7 +390,7 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 		{
 			//getchar();
 			//printf ("Recheck tracker %i\n", i);
-			pointcloud_process1 (g, tracker, n, x, amp, tracker->i[i], x + tracker->i[i]);
+			pointcloud_process1 (NULL, tracker, n, x, amp, tracker->i[i], x + tracker->i[i]);
 		}
 	}
 
