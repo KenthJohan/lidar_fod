@@ -390,7 +390,7 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 	{
 		return;
 	}
-	int32_t randomi = (rand() * n) / RAND_MAX;
+	int32_t randomi = ((float)rand() * (float)n) / (float)RAND_MAX;
 	v3f32 const * s = x + randomi;
 	pointcloud_process1 (g, tracker, n, x, amp, randomi, s);
 	for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
