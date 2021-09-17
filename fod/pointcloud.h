@@ -269,7 +269,6 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 		//v3f32 const * s = x + randomi;
 		m = v3f32_ball (x, n, s, x1, radius);
 		//XLOG (XLOG_INF, XLOG_GENERAL, "%i", m);
-
 		//Visual only:
 		for(uint32_t i = 0; i < n; ++i)
 		{
@@ -281,7 +280,12 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 				cid[i] |= POINTLABEL_SEARCH;
 			}
 		}
+		if (m < 4)
+		{
+			return;
+		}
 	}
+
 
 	v3f32 o = V3F32_ZERO;
 	m3f32 c;
