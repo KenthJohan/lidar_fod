@@ -100,11 +100,14 @@ void loop_stdin (struct poitracker * pc, struct graphics * g, FILE * f)
 	v3f32 x[CE30_WH]; //Pointcloud points position
 	float a[CE30_WH]; //Pointcloud points amplitude
 	uint32_t n;
+	int c = '\n';
 	while (1)
 	{
 		n = ce30_fread (x, a, f);
 		//XLOG (XLOG_INF, "Number of points: %i\n", n);
 		pointcloud_process (g, pc, n, x, a);
+		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
+		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
 }
 
@@ -119,6 +122,7 @@ void loop_file (struct poitracker * pc, struct graphics * g, FILE * f)
 	while (1)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
+		//Read pointcloud from file (f). Points are stored in (x) and amplitude (a).
 		n = ce30_fread (x, a, f);
 		pointcloud_process (g, pc, n, x, a);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
