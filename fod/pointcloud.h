@@ -381,6 +381,10 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 
 static void pointcloud_process (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], float amp[])
 {
+	if (n < 100)
+	{
+		return;
+	}
 	int32_t randomi = (rand() * n) / RAND_MAX;
 	v3f32 const * s = x + randomi;
 	pointcloud_process1 (g, tracker, n, x, amp, randomi, s);
