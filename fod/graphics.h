@@ -320,12 +320,25 @@ static void graphics_draw_obj (struct graphics * g, v3f32 * x, float r, u8rgba c
 	col[5] = color;
 }
 
+static void graphics_draw_line (struct graphics * g, v3f32 * a, v3f32 * b, u8rgba color)
+{
+	uint32_t last = g->lines.last;
+	v4f32 * pos = g->lines.pos + last;
+	u8rgba * col = g->lines.col + last;
+	graphicverts_reserve (&g->lines, 2);
+	v4f32_set_xyzw (pos + 0, a->x, a->y, a->z, 0.0f);
+	v4f32_set_xyzw (pos + 1, b->x, b->y, b->z, 0.0f);
+	col[0] = color;
+	col[1] = color;
+}
+
 
 
 
 static void graphics_draw_text (struct graphics * g, int i, Position3 * p, char const * text)
 {
 	Scale2 s = {{0.005f, 0.005f}};
+	ASSERT (i < MYENT_TEXT_LAST);
 	mg_send_set (g->sock, MYENT_TEXT0 + i, MG_SCALE2, &s, sizeof (Scale2));
 	mg_send_set (g->sock, MYENT_TEXT0 + i, MG_POSITION3, p, sizeof (Position3));
 	mg_send_set (g->sock, MYENT_TEXT0 + i, MG_TEXT, text, strlen (text));

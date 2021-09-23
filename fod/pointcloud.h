@@ -138,8 +138,8 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
 
 
 
-
-
+#define DECTECT_FAILED 0
+#define DECTECT_SUCCESS 1
 
 
 
@@ -147,13 +147,12 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
 
 //Maximize n and minimize h
 
-static void pointcloud_process1 (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], float amp[], int32_t randomi, v3f32 const * s)
+static uint32_t pointcloud_process1 (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], uint8_t cid[CE30_WH], int32_t randomi)
 {
 	float const radius = 0.3f;
-
+	v3f32 const * s = x + randomi;
 	v3f32 x1[CE30_WH];
-	uint8_t cid[CE30_WH];
-	memset (cid, 0, sizeof(cid));
+	memset (cid, 0, sizeof(uint8_t)*CE30_WH);
 
 	uint32_t m;
 	//int32_t randomi;
@@ -177,7 +176,7 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 		}
 		if (m < MIN_POINTS_IN_BALL)
 		{
-			return;
+			return DECTECT_FAILED;
 		}
 		//XLOG (XLOG_INF, XLOG_GENERAL, "randomi %i", randomi);
 	}
@@ -192,7 +191,17 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 	pointcloud_covariance (x1, m, &c, 1.0f);
 	pointcloud_eigen (&c, e, w);
 
-	//if ((2.0f*w[0] > w[1])){return;}
+	// Check if the ground box is thin enough to reliably detect points above the ground box:
+	// These are the ground box dimensions:
+	// w[0] = Shortest length m^2, w[1] = Medium length m^2, w[2] = Farthest length m^2.
+	// Note that the ground box dimensions is expressed as eigen values (w[0], w[1], w[2]) which is in square meter (m^2).
+	// To get the actual thickness of the box do sqrtf(w[0]).
+	if (DETECT_MIN_GROUND_THICKNESS_RATIO2*w[0] > w[1])
+	{
+		return DECTECT_FAILED;
+	}
+
+	// Prevent eigen vector flip
 	pointcloud_conditional_basis_flip (e);
 
 	{
@@ -201,15 +210,18 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 		pointcloud_rotate ((m3f32 *)e, x2, x1, n); // (x1) := e (x2)
 	}
 
+	if (g)
+	{
+		//graphics_draw_pointcloud_alpha (g, n, x1, amp);
+		graphics_draw_pca (g, e, w, &o);
+	}
+
+
 	//XLOG (XLOG_INF, XLOG_GENERAL, "%f", sqrt(w[0]));//0.000985
 	//printf ("ball=%i, w=(%f,%f,%f) ratio:%f\n", m, w[0], w[1], w[2], w[1] / w[0]);
 
-	// Check if the ground box is thin enough to reliably detect points above the ground box:
-	// These are the ground box dimensions:
-	// w[0] = Shortest length m^2, w[1] = Medium length m^2, w[2] = Farthest length m^2.
-	// Note that the ground box dimensions is expressed as eigen values (w[0], w[1], w[2]) which is in square meter (m^2).
-	// To get the actual thickness of the box do sqrtf(w[0]).
-	if (DETECT_MIN_GROUND_THICKNESS_RATIO2*w[0] < w[1])
+
+	//Reliably detect points above the ground box:
 	{
 		// Label points within a pointcloud sector (0, a, b)
 		//     POINTCLOUD SECTOR
@@ -257,28 +269,9 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 
 
 
-	if (g)
-	{
-		for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
-		{
-			char buf[10];
-			snprintf(buf, 10, "%i:%4.2f", i, tracker->h[i]);
-			//snprintf(buf, 10, "%i", i);
-			graphics_draw_obj (g, tracker->x + i, tracker->r[i], (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
-			graphics_draw_text (g, i, tracker->x + i, buf);
-		}
-	}
 
 
-
-	if (g)
-	{
-		graphics_draw_pointcloud_cid (g, n, x, cid);
-		//graphics_draw_pointcloud_alpha (g, n, x1, amp);
-		graphics_draw_pca (g, e, w, &o);
-		graphics_draw_obj (g, x + randomi, 0.1f, (u8rgba){{0x99, 0x33, 0xFF, 0xFF}});
-		graphics_flush (g);
-	}
+	return DECTECT_SUCCESS;
 }
 
 
@@ -287,13 +280,26 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 
 static void pointcloud_process (struct graphics * g, struct poitracker * tracker, int32_t n, v3f32 x[], float amp[])
 {
+	UNUSED (amp);
 	if (n < MIN_POINTS_IN_LIDAR)
 	{
 		return;
 	}
+
+
+	uint8_t cid[CE30_WH];
 	int32_t randomi = (rand() % n);
-	v3f32 const * s = x + randomi;
-	pointcloud_process1 (g, tracker, n, x, amp, randomi, s);
+	pointcloud_process1 (g, tracker, n, x, cid, randomi);
+
+
+	if (g)
+	{
+		graphics_draw_pointcloud_cid (g, n, x, cid);
+		graphics_draw_obj (g, x + randomi, 0.1f, (u8rgba){{0x99, 0x33, 0xFF, 0xFF}});
+	}
+
+
+
 	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 	{
 		if (tracker->h[i] > TRACKER_MIN_HITS_RESCAN)
@@ -303,11 +309,38 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 			randomi = tracker->i[i];
 			int32_t spread = (rand() % (TRACKER_RESCAN_RADIUS*2)) - TRACKER_RESCAN_RADIUS;
 			randomi = CLAMP(randomi + spread, 0, n);
-			pointcloud_process1 (NULL, tracker, n, x, amp, tracker->i[i], x + randomi);
+			pointcloud_process1 (NULL, tracker, n, x, cid, randomi);
+			//graphics_flush (g);
 		}
 	}
 
 	tracker_update2 (tracker);
+
+	if (g)
+	{
+		for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
+		{
+			char buf[10];
+			//snprintf(buf, 10, "%i:%4.2f", i, tracker->h[i]);
+			snprintf(buf, 10, "%i", i);
+			graphics_draw_obj (g, tracker->x + i, tracker->r[i], (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
+			graphics_draw_text (g, i, tracker->x + i, buf);
+		}
+	}
+
+
+
+
+
+	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
+	{
+		if (tracker->r[i] != FLT_MAX)
+		{
+			graphics_draw_line (g, x + tracker->i[i], tracker->x + i, (u8rgba){{0x44, 0xAA, 0xAA, 0xFF}});
+			//graphics_draw_obj (g, x + tracker->i[i], tracker->r[i], (u8rgba){{0x00, 0x00, 0x66, 0xFF}});
+		}
+	}
+	graphics_flush (g);
 
 	/*
 	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)

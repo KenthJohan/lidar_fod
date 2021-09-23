@@ -207,7 +207,7 @@ int main (int argc, char const * argv[])
 
 
 	struct graphics g;
-	g.lines.count = 100;
+	g.lines.count = 200;
 	g.points.count = CE30_WH*2;
 	graphics_init (&g, mainarg.address);
 
