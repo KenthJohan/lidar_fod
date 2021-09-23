@@ -359,7 +359,8 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 		for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 		{
 			char buf[10];
-			snprintf(buf, 10, "%i:%4.2f", i, tracker->h[i]);
+			//snprintf(buf, 10, "%i:%4.2f", i, tracker->h[i]);
+			snprintf(buf, 10, "%i", i);
 			graphics_draw_obj (g, tracker->x + i, tracker->r[i], (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
 			graphics_draw_text (g, i, tracker->x + i, buf);
 		}
