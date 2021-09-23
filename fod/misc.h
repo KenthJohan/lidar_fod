@@ -29,13 +29,29 @@
 #define FLT_MAX		__FLT_MAX__
 #endif
 
-#define DISTANCE_ABOVE_GROUND 6.0f
-#define POINTS_IN_BALL_REQUIREMENT 300
 
-#define POINTLABEL_CLUSTER 0x08 //This is a cluster
-#define POINTLABEL_OBJ 0x04 //This is a objects
+//Sample configurations
+#define MIN_POINTS_IN_LIDAR 1000
+#define MIN_POINTS_IN_BALL 300
+
+
+//Detection configurations
+#define DETECT_MIN_DISTANCE_ABOVE_GROUND 6.0f
+#define DETECT_MIN_GROUND_THICKNESS_RATIO 5.0f
+#define DETECT_MIN_GROUND_THICKNESS_RATIO2 (DETECT_MIN_GROUND_THICKNESS_RATIO*DETECT_MIN_GROUND_THICKNESS_RATIO)
+
+#define POINTLABEL_CLUSTER 0x08 //Not used.
+#define POINTLABEL_OBJ 0x04 //Points above ground thus potential objects.
 #define POINTLABEL_SECTOR 0x02 //This is a sector from LiDAR origin where objects can be labeled.
 #define POINTLABEL_SEARCH 0x01 //This is all points that define PCA.
+
+
+//Tracker configurations
+#define TRACKER_RADIUS 0.1f
+#define TRACKER_CAPACITY 5
+
+
+
 
 
 

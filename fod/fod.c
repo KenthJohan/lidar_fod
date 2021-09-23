@@ -189,7 +189,7 @@ int main (int argc, char const * argv[])
 	{'i', "input",           CSC_TYPE_U32,    &mainarg.flags,      ARG_STDIN,           "Get pointcloud from stdin"},
 	{'c', "ctrlmode",        CSC_TYPE_U32,    &mainarg.flags,      ARG_CTRLMODE,        "Step forward foreach keypress"},
 	{'a', "address",         CSC_TYPE_STRING, &mainarg.address,    0,                   "The MQTT address to send to"},
-	{'f', "legacy_filename", CSC_TYPE_STRING, &mainarg.filename,   0,                   "Filename to f32 xyzw 320x20 file"},
+	{'f', "filename",        CSC_TYPE_STRING, &mainarg.filename,   0,                   "Filename to f32 xyzw 320x20 file"},
 	{'F', "frame",           CSC_TYPE_U32,    &mainarg.frame,      0,                   "The starting frame"},
 	{'d', "duration",        CSC_TYPE_U32,    &mainarg.usleep,     0,                   "Duration for each frame"},
 	{CSC_ARGV_END}};
@@ -220,6 +220,10 @@ int main (int argc, char const * argv[])
 		XLOG (XLOG_INF, XLOG_GENERAL, "Opening binary file %s to read LiDAR frames.", mainarg.filename);
 		f = fopen (mainarg.filename, "rb");
 		ce30_seek_set (f, mainarg.frame);
+		for (uint32_t i = 0; i < mainarg.frame; ++i)
+		{
+			rand();
+		}
 	}
 	else
 	{

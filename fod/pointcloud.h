@@ -133,28 +133,24 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
  */
 static uint32_t poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t count, v3f32 const * x)
 {
-	//Check if (x) is inside a existing tracker sphere:
 	uint32_t i;
 	for (i = 0; i < count; ++i)
 	{
 		v3f32 d;
 		v3f32_sub (&d, x, y + i);
 		float r2 = r[i] * r[i];
+		//Check if (x) is inside a existing tracker sphere(i):
 		if (v3f32_norm2 (&d) < r2)
 		{
-			h[i] += 0.2f;//Increase intersect hits
-			h[i] = MIN (h[i], 1.0f);
-			r[i] = 0.2f;
-			y[i] = *x;
-			printf ("d = %f\n", v3f32_norm (&d));
-
-			if (v3f32_norm (&d) < 1.0f)
-			{
-				//y[i].z += 1.0f;
-				v3f32_mul (&d, &d, -0.5f);
-				v3f32_add (y + i, y + i, &d); //y := y + d, y is point, d is vector
-			}
-
+			// Detection coordinate (x) is inside tracker sphere(i)
+			// Set tracker position y[i] to detection coordinate (x)
+			y[i] = (*x);
+			// Move tracker smootly to the detection coordinate if tracker is already tracking:
+			v3f32_mul (&d, &d, -0.5f * (r[i] != FLT_MAX));
+			v3f32_add (y + i, y + i, &d); // (y := y + d) where (y) is point, (d) is vector
+			// Update tracker state:
+			h[i] = MIN (h[i] + 0.2f, 1.0f); // Increase intersect hits
+			r[i] = TRACKER_RADIUS;
 			break;
 		}
 	}
@@ -170,10 +166,6 @@ static uint32_t poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t co
 	//If i and j intersects remove (j)
 	for (uint32_t j = 0; j < count; ++j)
 	{
-		if ((j >= 5) || (i >= 5))
-		{
-			printf ("Hello!\n");
-		}
 		v3f32 d;
 		v3f32_sub (&d, y + i, y + j); //d := y[i] - y[j]
 		float l2 = v3f32_norm2 (&d);
@@ -202,31 +194,31 @@ static uint32_t poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t co
 
 
 
-#define POITRACKER_CAPACITY 5
+
 struct poitracker
 {
 	uint32_t count;//Not used currently
-	float r[POITRACKER_CAPACITY];//Radius
-	v3f32 x[POITRACKER_CAPACITY];//Position
-	float h[POITRACKER_CAPACITY];//History
-	uint32_t i[POITRACKER_CAPACITY];//Pointcloud Index
+	float r[TRACKER_CAPACITY];//Radius
+	v3f32 x[TRACKER_CAPACITY];//Position
+	float h[TRACKER_CAPACITY];//History
+	uint32_t i[TRACKER_CAPACITY];//Pointcloud Index
 };
 
 static void poitracker_init (struct poitracker * tracker)
 {
 	memset (tracker, 0, sizeof (struct poitracker));
-	vf32_set1 (POITRACKER_CAPACITY, tracker->r, FLT_MAX);
-	vf32_set1 (POITRACKER_CAPACITY, tracker->h, 0.0f);
+	vf32_set1 (TRACKER_CAPACITY, tracker->r, FLT_MAX);
+	vf32_set1 (TRACKER_CAPACITY, tracker->h, 0.0f);
 }
 
 
 static void poitracker_update (struct poitracker * tracker, v3f32 * x, int32_t randomi)
 {
-	uint32_t i = poitracker_update1 (tracker->h, tracker->r, tracker->x, POITRACKER_CAPACITY, x);
-	if(i < POITRACKER_CAPACITY)
+	uint32_t i = poitracker_update1 (tracker->h, tracker->r, tracker->x, TRACKER_CAPACITY, x);
+	if(i < TRACKER_CAPACITY)
 	{
 		tracker->i[i] = randomi;
-		printf ("tracker %i got updated. count: %i\n", i, POITRACKER_CAPACITY);
+		printf ("tracker %i got updated. count: %i\n", i, TRACKER_CAPACITY);
 	}
 }
 
@@ -280,7 +272,7 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 				cid[i] |= POINTLABEL_SEARCH;
 			}
 		}
-		if (m < 4)
+		if (m < MIN_POINTS_IN_BALL)
 		{
 			return;
 		}
@@ -307,19 +299,24 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 	}
 
 	//XLOG (XLOG_INF, XLOG_GENERAL, "%f", sqrt(w[0]));//0.000985
-
-	//Check if PCA is formed by a planar pointcloud:
-	//w[0] = Shortest, w[1] = Medium, w[2] = Farthest.
 	//printf ("ball=%i, w=(%f,%f,%f) ratio:%f\n", m, w[0], w[1], w[2], w[1] / w[0]);
-	if ((3.0f*w[0] < w[1]) && (m > POINTS_IN_BALL_REQUIREMENT))
+
+	// Check if the ground box is thin enough to reliably detect points above the ground box:
+	// These are the ground box dimensions:
+	// w[0] = Shortest length m^2, w[1] = Medium length m^2, w[2] = Farthest length m^2.
+	// Note that the ground box dimensions is expressed as eigen values (w[0], w[1], w[2]) which is in square meter (m^2).
+	// To get the actual thickness of the box do sqrtf(w[0]).
+	if (DETECT_MIN_GROUND_THICKNESS_RATIO2*w[0] < w[1])
 	{
-		//Classify objects within circle sector at ball location:
+		// Label points within a pointcloud sector (0, a, b)
+		//     POINTCLOUD SECTOR
 		//  0     a   r    b    n
 		//   \====\=======/====/
 		//     \===\=====/===/
 		//        \=\===/=/
 		//          \\=//
 		//            0
+		//          LIDAR
 		int32_t const arclength = 600;
 		int32_t a = MAX(randomi - arclength, 0);
 		int32_t b = MIN(randomi + arclength, (int32_t)n);
@@ -329,7 +326,7 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 		{
 			cid[i] |= POINTLABEL_SECTOR;
 			//Label points that is far above ground
-			if (x1[i].x < sqrtf(w[0])*DISTANCE_ABOVE_GROUND) {continue;}
+			if (x1[i].x < sqrtf(w[0])*DETECT_MIN_DISTANCE_ABOVE_GROUND) {continue;}
 			cid[i] |= POINTLABEL_OBJ;
 			iobj[j] = i;
 			j++;
@@ -359,7 +356,7 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 
 	if (g)
 	{
-		for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
+		for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 		{
 			char buf[10];
 			snprintf(buf, 10, "%i:%4.2f", i, tracker->h[i]);
@@ -373,7 +370,7 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 	if (g)
 	{
 		graphics_draw_pointcloud_cid (g, n, x, cid);
-		graphics_draw_pointcloud_alpha (g, n, x1, amp);
+		//graphics_draw_pointcloud_alpha (g, n, x1, amp);
 		graphics_draw_pca (g, e, w, &o);
 		graphics_draw_obj (g, x + randomi, 0.1f, (u8rgba){{0x99, 0x33, 0xFF, 0xFF}});
 		graphics_flush (g);
@@ -386,14 +383,14 @@ static void pointcloud_process1 (struct graphics * g, struct poitracker * tracke
 
 static void pointcloud_process (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], float amp[])
 {
-	if (n < 100)
+	if (n < MIN_POINTS_IN_LIDAR)
 	{
 		return;
 	}
 	int32_t randomi = ((int64_t)rand() * (int64_t)n) / (int64_t)RAND_MAX;
 	v3f32 const * s = x + randomi;
 	pointcloud_process1 (g, tracker, n, x, amp, randomi, s);
-	for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
+	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 	{
 		if (tracker->h[i] > 0.20f)
 		{
@@ -403,7 +400,7 @@ static void pointcloud_process (struct graphics * g, struct poitracker * tracker
 		}
 	}
 
-	for (uint32_t i = 0; i < POITRACKER_CAPACITY; ++i)
+	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 	{
 		tracker->h[i] += -0.02f;//Reduce intersect hits
 		if (tracker->h[i] < 0.0f)
