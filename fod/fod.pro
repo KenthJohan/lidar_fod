@@ -10,12 +10,14 @@ DEFINES += NNG_STATIC_LIB
 QMAKE_CFLAGS += -Wno-unused-function
 QMAKE_CFLAGS += -Wno-unused-parameter
 
-SOURCES += fod.c flecs.c
+SOURCES += fod.c
 
-HEADERS += calculation.h
+
 HEADERS += myent.h
 HEADERS += misc.h
 HEADERS += pointcloud.h
+HEADERS += detection.h
+HEADERS += tracker.h
 HEADERS += graphics.h
 HEADERS += mg_comp.h
 HEADERS += mg_attr.h
