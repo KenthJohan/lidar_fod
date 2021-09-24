@@ -30,7 +30,7 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 	// Select sample coordinate
 	v3f32 const * s = x + sample_index;
 
-	// Temporary pointcloud
+	// Temporary subcloud:
 	v3f32 x1[CE30_WH];
 
 	// Number of point in ball:
@@ -38,7 +38,8 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 
 
 	{
-		// Copy all points (x) within sphere to (x1):
+		// Copy (n) amount of points (x) at position (s) within sphere to (x1):
+		// Where (m) is number of point in ball:
 		m = v3f32_ball (x, n, s, x1, DETECT_BALL_RADIUS);
 
 		// Visual only:
@@ -63,15 +64,15 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 	// Begin PCA calculation from subcloud (x1).
 	// PCA will produce: orientation (e), centroid (o), variance (w) of subcloud (x1).
 	// o : Centroid of subcloud (x1). i.e. subcloud offset (o) from origin (0,0,0).
-	// c : Coveriance matrix of subcloud (x1). Contains orientation and variance.
-	// e : Eigen column vectors (Shortest, Medium, Farthest) of coveriance matrix (c). Contains only orientation.
-	// w : Eigen values (Shortest, Medium, Farthest) of coveriance matrix (c). Contains variance.
+	// c : 3x3 coveriance matrix of subcloud (x1). Contains orientation and variance.
+	// e : Three eigen column vectors (Shortest, Medium, Farthest) of coveriance matrix (c). Contains only orientation.
+	// w : Three eigen values (Shortest, Medium, Farthest) of coveriance matrix (c). Contains variance.
 	v3f32 o = V3F32_ZERO;
 	m3f32 c;
 	v3f32 e[3];
 	float w[3];
 	v3f32_meanacc (&o, x1, m);
-	v3f32_subv (x1, x1, &o, 1, 1, 0, m);
+	v3f32_subv (x1, x1, &o, 1, 1, 0, m); // x1[i] := x1[i] - o[0], (where i is 0 .. m)
 	pointcloud_covariance (x1, m, &c, 1.0f);
 	pointcloud_eigen (&c, e, w);
 	// End PCA calculation
