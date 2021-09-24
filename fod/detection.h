@@ -28,18 +28,19 @@
 
 static uint32_t detection_sample (struct graphics * g, struct poitracker * tracker, uint32_t n, v3f32 x[], uint8_t cid[CE30_WH], int32_t randomi)
 {
-	//Select random sample position:
+	// Select random sample position:
 	v3f32 const * s = x + randomi;
 
+	// Temporary pointcloud
 	v3f32 x1[CE30_WH];
-	memset (cid, 0, sizeof(uint8_t)*CE30_WH);
 
-	//Number of point in ball:
+
+	// Number of point in ball:
 	uint32_t m;
 
 
 	{
-		//Sample random point in pointcloud
+		// Copy all points (x) within sphere to (x1):
 		m = v3f32_ball (x, n, s, x1, DETECT_BALL_RADIUS);
 
 		//XLOG (XLOG_INF, XLOG_GENERAL, "%i", m);
@@ -54,6 +55,8 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 				cid[i] |= POINTLABEL_SEARCH;
 			}
 		}
+
+		// Enough points must be within the sphere to make a good detection:
 		if (m < MIN_POINTS_IN_BALL)
 		{
 			return DECTECT_FAILED;
@@ -64,12 +67,18 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 
 	v3f32 o = V3F32_ZERO; // Pointcloud centroid.
 	m3f32 c; // Coveriance matrix. Then rotation matrix by three eigen column vectors.
-	v3f32 e[3]; //Eigen column vectors (Shortest, Medium, Farthest)
-	float w[3]; //Eigen values (Shortest, Medium, Farthest)
+	v3f32 e[3]; // Eigen column vectors (Shortest, Medium, Farthest)
+	float w[3]; // Eigen values (Shortest, Medium, Farthest)
 	v3f32_meanacc (&o, x1, m);
 	v3f32_subv (x1, x1, &o, 1, 1, 0, m);
 	pointcloud_covariance (x1, m, &c, 1.0f);
 	pointcloud_eigen (&c, e, w);
+
+	if (g)
+	{
+		//graphics_draw_pointcloud_alpha (g, n, x1, amp);
+		graphics_draw_pca (g, e, w, &o);
+	}
 
 	// Check if the ground box is thin enough to reliably detect points above the ground box:
 	// These are the ground box dimensions:
@@ -92,11 +101,7 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 		pointcloud_rotate ((m3f32 *)e, x2, x1, n); // (x1) := e (x2)
 	}
 
-	if (g)
-	{
-		//graphics_draw_pointcloud_alpha (g, n, x1, amp);
-		graphics_draw_pca (g, e, w, &o);
-	}
+
 
 
 	//XLOG (XLOG_INF, XLOG_GENERAL, "%f", sqrt(w[0]));//0.000985
@@ -114,16 +119,16 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 		//          \\=//
 		//            0
 		//          LIDAR
-		int32_t const arclength = 600;
-		int32_t a = MAX(randomi - arclength, 0);
-		int32_t b = MIN(randomi + arclength, (int32_t)n);
+		int32_t a = MAX(randomi - DETECT_ARCLENGTH, 0);
+		int32_t b = MIN(randomi + DETECT_ARCLENGTH, (int32_t)n);
 		int32_t iobj[CE30_WH];
 		uint32_t j = 0;
 		for (int32_t i = a; i < b; ++i)
 		{
 			cid[i] |= POINTLABEL_SECTOR;
-			//Label points that is far above ground
-			if (x1[i].x < sqrtf(w[0])*DETECT_MIN_DISTANCE_ABOVE_GROUND) {continue;}
+			// Label points that is far above ground
+			float x = x1[i].x;
+			if ((x*x) < (w[0]*DETECT_MIN_DISTANCE_ABOVE_GROUND2)) {continue;}
 			cid[i] |= POINTLABEL_OBJ;
 			iobj[j] = i;
 			j++;
@@ -169,18 +174,16 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, i
 	}
 
 
+	// Visual only:
 	uint8_t cid[CE30_WH];
-	int32_t randomi = (rand() % n);
-	detection_sample (g, tracker, n, x, cid, randomi);
+	memset (cid, 0, sizeof(uint8_t)*CE30_WH);
 
-
-	if (g)
 	{
-		graphics_draw_pointcloud_cid (g, n, x, cid);
+		int32_t randomi = (rand() % n);
+		detection_sample (g, tracker, n, x, cid, randomi);
 		graphics_draw_obj (g, x + randomi, 0.1f, (u8rgba){{0x99, 0x33, 0xFF, 0xFF}});
+		graphics_draw_pointcloud_cid (g, n, x, cid);
 	}
-
-
 
 	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 	{
@@ -188,7 +191,7 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, i
 		{
 			//getchar();
 			//printf ("Recheck tracker %i\n", i);
-			randomi = tracker->i[i];
+			int32_t randomi = tracker->i[i];
 			int32_t spread = (rand() % (TRACKER_RESCAN_RADIUS*2)) - TRACKER_RESCAN_RADIUS;
 			randomi = CLAMP(randomi + spread, 0, n);
 			detection_sample (NULL, tracker, n, x, cid, randomi);
