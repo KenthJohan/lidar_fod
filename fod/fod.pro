@@ -23,7 +23,6 @@ HEADERS += mg_comp.h
 HEADERS += mg_attr.h
 HEADERS += mg_send.h
 HEADERS += ../shared/ce30.h
-HEADERS += ../shared/shared.h
 
 HEADERS += csc_math.h
 HEADERS += csc_linmat.h

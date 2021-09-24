@@ -2,15 +2,6 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-//git clone https://github.com/nanomsg/nng
-//cd nng && mkdir build && cd build
-//cmake -G"MSYS Makefiles" .. -DCMAKE_INSTALL_PREFIX="C:\msys64\mingw64"
-//pacman -R cmake
-//pacman -S mingw-w64-x86_64-cmake
-//mingw32-make -j4
-//mingw32-make test
-//mingw32-make install
-//-lnng
 #include <nng/nng.h>
 #include <nng/protocol/pair0/pair.h>
 #include <nng/supplemental/util/platform.h>
@@ -18,21 +9,11 @@
 #include "csc/csc_debug_nng.h"
 #include "csc/csc_crossos.h"
 #include "csc/csc_malloc_file.h"
-#include "csc/csc_math.h"
-#include "csc/csc_linmat.h"
-#include "csc/csc_m3f32.h"
-#include "csc/csc_m3f32_print.h"
-#include "csc/csc_m4f32.h"
-#include "csc/csc_v3f32.h"
-#include "csc/csc_v3f32_print.h"
-#include "csc/csc_v4f32.h"
-#include "csc/csc_qf32.h"
 #include "csc/csc_filecopy.h"
 #include "csc/csc_argv.h"
 #include "csc/csc_assert.h"
 #include "csc/csc_xlog.h"
 
-#include "../shared/shared.h"
 #include "../shared/ce30.h"
 
 #include "mg_send.h"
@@ -99,13 +80,11 @@ void loop_stdin (struct poitracker * pc, struct graphics * g, FILE * f)
 	v3f32 x[CE30_WH]; //Pointcloud points position
 	float a[CE30_WH]; //Pointcloud points amplitude
 	uint32_t n;
-	int c = '\n';
 	while (1)
 	{
 		n = ce30_fread (x, a, f);
 		//XLOG (XLOG_INF, "Number of points: %i\n", n);
 		detection_input (g, pc, n, x, a);
-		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
 }

@@ -11,7 +11,6 @@
 #include "csc/csc_vu32.h"
 #include "csc/csc_rgb.h"
 
-#include "../shared/shared.h"
 #include "../shared/ce30.h"
 
 #include "misc.h"
@@ -217,12 +216,12 @@ static void graphics_draw_pointcloud_cid (struct graphics * g, uint32_t n, v3f32
 	graphicverts_reserve (&g->points, n);
 	for (uint32_t i = 0; i < n; ++i)
 	{
-			col[i] = graphics_cid(cid[i]);
-			col[i].a = 0xFF;
-			pos[i].w = 10.0f;
-			pos[i].x = x[i].x;
-			pos[i].y = x[i].y;
-			pos[i].z = x[i].z;
+		col[i] = graphics_cid (cid[i]);
+		col[i].a = 0xFF;
+		pos[i].w = 10.0f;
+		pos[i].x = x[i].x;
+		pos[i].y = x[i].y;
+		pos[i].z = x[i].z;
 	}
 }
 
@@ -261,9 +260,9 @@ static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3], v3f3
 	u8rgba * col = g->lines.col + last;
 	graphicverts_reserve (&g->lines, 12);
 	float l = 8.0f;
-	u8rgba col_x = {{0xFF, 0x55, 0x55, 0xFF}};
-	u8rgba col_y = {{0x55, 0xFF, 0x55, 0xFF}};
-	u8rgba col_z = {{0x55, 0x55, 0xFF, 0xFF}};
+	u8rgba col_x = {{0xFF, 0x55, 0x55, 0x99}};
+	u8rgba col_y = {{0x55, 0xFF, 0x55, 0x99}};
+	u8rgba col_z = {{0x55, 0x55, 0xFF, 0x99}};
 
 	v4f32_set_xyzw (pos + 0, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 2, c->x, c->y, c->z, 0.0f);
