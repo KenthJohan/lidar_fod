@@ -125,14 +125,16 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 			// Visual only:
 			cid[i] |= POINTLABEL_SECTOR;
 
-			// Check if point is above the ground. Square meter (m^2) is used for perfomence:
+			// Check if point is above the ground:
 			float x = x1[i].x;
-			if ((x*x) < (w[0]*DETECT_MIN_DISTANCE_ABOVE_GROUND2)) {continue;}
-			iobj[j] = i;
-			j++;
-
-			// Visual only:
-			cid[i] |= POINTLABEL_OBJ;
+			if ((x*x) > (w[0]*DETECT_MIN_EIGEN_FACTOR2))
+			{
+				// Store the index (i) of the point that is above the ground:
+				iobj[j] = i;
+				j++;
+				// Visual only:
+				cid[i] |= POINTLABEL_OBJ;
+			}
 		}
 
 		// Check any point above the ground got succefully detected:
@@ -140,24 +142,15 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 		{
 			// Simple cluster selection.
 			// Randomly selected point is garanteed to belong to only one cluster:
-			int32_t randomj = rand() % j;
-			ASSERT (iobj[randomj] < (int32_t)n);
-			ASSERT (iobj[randomj] >= a);
-			ASSERT (iobj[randomj] <= b);
-
-			//printf ("%i %i\n", cluster[randomj], randomj);
-			//csc_v3f32_print_rgb (stdout, x + cluster[randomj]);
-
-			// Select position (y) for found object:
-			v3f32 * y = x + iobj[randomj];
-
+			int32_t i = iobj[rand() % j];
+			ASSERT (i < (int32_t)n);
+			ASSERT (i >= a);
+			ASSERT (i <= b);
+			poitracker_update (trackers, x + i, sample_index);
 			if (g)
 			{
-				graphics_draw_obj (g, y, 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
+				graphics_draw_obj (g, x + i, 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
 			}
-
-			//
-			poitracker_update (trackers, y, sample_index);
 		}
 
 	}

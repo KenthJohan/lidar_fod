@@ -267,7 +267,7 @@ static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3], v3f3
 	v4f32_set_xyzw (pos + 0, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 2, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 4, c->x, c->y, c->z, 0.0f);
-	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*DETECT_MIN_DISTANCE_ABOVE_GROUND);
+	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*DETECT_MIN_EIGEN_FACTOR);
 	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1])*l);
 	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2])*l);
 	col[0] = col_x;
@@ -282,7 +282,7 @@ static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3], v3f3
 	v4f32_set_xyzw (pos + 6, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 8, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 10, c->x, c->y, c->z, 0.0f);
-	v3f32_add_mul ((v3f32*)(pos + 7), c, e + 0, 1.0, -sqrtf(w[0])*DETECT_MIN_DISTANCE_ABOVE_GROUND);
+	v3f32_add_mul ((v3f32*)(pos + 7), c, e + 0, 1.0, -sqrtf(w[0])*DETECT_MIN_EIGEN_FACTOR);
 	v3f32_add_mul ((v3f32*)(pos + 9), c, e + 1, 1.0, -sqrtf(w[1])*l);
 	v3f32_add_mul ((v3f32*)(pos + 11), c, e + 2, 1.0, -sqrtf(w[2])*l);
 	col[6] = col_x;
