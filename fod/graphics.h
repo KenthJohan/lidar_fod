@@ -253,7 +253,7 @@ static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f
 
 
 
-static void graphics_draw_pca (struct graphics * g, v3f32 e[3], float w[3], v3f32 * c)
+static void graphics_draw_pca (struct graphics * g, v3f32 const e[3], float const w[3], v3f32 const * c)
 {
 	uint32_t last = g->lines.last;
 	v4f32 * pos = g->lines.pos + last;

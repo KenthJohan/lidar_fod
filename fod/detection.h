@@ -23,9 +23,13 @@
 
 #define DECTECT_FAILED 0
 #define DECTECT_SUCCESS 1
+#define DETECT_FLAG_RANDOM 0x0001
 
 
-static uint32_t detection_sample (struct graphics * g, struct poitracker * trackers, uint32_t n, v3f32 x[], uint8_t cid[CE30_WH], int32_t sample_index)
+
+
+static uint32_t detection_sample
+(struct graphics * g, struct poitracker * trackers, uint32_t n, v3f32 x[], uint8_t cid[CE30_WH], int32_t sample_index, uint32_t flag)
 {
 	// Select sample coordinate
 	v3f32 const * s = x + sample_index;
@@ -77,10 +81,20 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 	pointcloud_eigen (&c, e, w);
 	// End PCA calculation
 
+	//https://stackoverflow.com/questions/2782647/how-to-get-yaw-pitch-and-roll-from-a-3d-vector
+	float elevation = atan2(e[0].x, e[0].z);
+	float roll = asin(-e[0].y);
+
 	if (g)
 	{
 		//graphics_draw_pointcloud_alpha (g, n, x1, amp);
 		graphics_draw_pca (g, e, w, &o);
+		if (flag & DETECT_FLAG_RANDOM)
+		{
+			//csc_v3f32_print_rgb(e);
+			printf ("roll      %f\n", f32_rad_to_deg(roll));
+			printf ("elevation %f\n", f32_rad_to_deg(elevation));
+		}
 	}
 
 	// Check if the ground box is thin enough to reliably detect points above the ground box:
@@ -129,7 +143,7 @@ static uint32_t detection_sample (struct graphics * g, struct poitracker * track
 			float x = x1[i].x;
 			if ((x*x) > (w[0]*DETECT_MIN_EIGEN_FACTOR2))
 			{
-				// Store the index (i) of the point that is above the ground:
+				// Store point index (i) that is above the ground:
 				iobj[j] = i;
 				j++;
 				// Visual only:
@@ -178,7 +192,7 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, i
 
 	{
 		int32_t randomi = (rand() % n);
-		detection_sample (g, tracker, n, x, cid, randomi);
+		detection_sample (g, tracker, n, x, cid, randomi, DETECT_FLAG_RANDOM);
 #ifdef ENABLE_GRAPHIC
 		graphics_draw_obj (g, x + randomi, 0.05f, (u8rgba){{0x99, 0x33, 0xFF, 0xAA}});
 		graphics_draw_pointcloud_cid (g, n, x, cid);
@@ -194,7 +208,7 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, i
 			int32_t randomi = tracker->i[i];
 			int32_t spread = (rand() % (TRACKER_RESCAN_RADIUS*2)) - TRACKER_RESCAN_RADIUS;
 			randomi = CLAMP(randomi + spread, 0, n);
-			detection_sample (NULL, tracker, n, x, cid, randomi);
+			detection_sample (NULL, tracker, n, x, cid, randomi, 0);
 			//graphics_flush (g);
 		}
 	}
