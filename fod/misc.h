@@ -37,12 +37,12 @@
 
 // Sample configurations:
 #define MIN_POINTS_IN_LIDAR 1000
-#define MIN_POINTS_IN_BALL 300
+#define MIN_POINTS_IN_BALL 150
 
 
 // Detection configurations:
 #define DETECT_ARCLENGTH 800
-#define DETECT_BALL_RADIUS 0.2f
+#define DETECT_BALL_RADIUS 0.3f
 #define DETECT_BALL_RADIUS2 (DETECT_BALL_RADIUS*DETECT_BALL_RADIUS)
 
 
@@ -54,8 +54,8 @@
 
 
 // Tracker configurations:
-#define TRACKER_RADIUS 0.1f
-#define TRACKER_CAPACITY 5
+#define TRACKER_RADIUS 0.15f
+#define TRACKER_CAPACITY 6
 #define TRACKER_HITINCREMENT 0.2f
 #define TRACKER_DISSIPATION 0.03f
 #define TRACKER_MIN_HITS_RESCAN 0.15f
