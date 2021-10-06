@@ -1,3 +1,6 @@
 [submodule "fod/csc"]
 	path = fod/csc
 	url = https://github.com/KenthJohan/csc
+[submodule "fod2/csc"]
+	path = fod2/csc
+	url = https://github.com/KenthJohan/csc
