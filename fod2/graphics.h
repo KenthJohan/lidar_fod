@@ -235,7 +235,7 @@ static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f
 	for (uint32_t i = 0; i < n; ++i)
 	{
 		float w;
-		w = CLAMP(a[i] * 4.0f, 0.0f, 255.0f);
+		w = CLAMP(a[i], 0.0f, 255.0f);
 		col[i].r = (uint8_t)(w);
 		col[i].g = (uint8_t)(w);
 		col[i].b = (uint8_t)(w);

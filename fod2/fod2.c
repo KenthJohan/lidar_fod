@@ -18,8 +18,9 @@
 
 #include "mg_send.h"
 
-#include "detection.h"
+#include "detection2.h"
 #include "graphics.h"
+#include "pcfod.h"
 
 
 
@@ -39,71 +40,33 @@ struct
 } mainarg;
 
 
-static uint32_t ce30_filter1 (v4f32 const x[], v3f32 y[], float w[], float d2)
+void loop_stdin (struct graphics * g, struct fodcontext * fod, FILE * f)
 {
-	ASSERT_PARAM_NOTNULL(x);
-	ASSERT_PARAM_NOTNULL(y);
-	ASSERT_PARAM_NOTNULL(w);
-	uint32_t j = 0;
-	for (uint32_t i = 0; i < CE30_WH; ++i)
-	{
-		v3f32 xi = {{x[i].x, x[i].y, x[i].z}};
-		if ((d2 == 0.0f) || (v3f32_norm2 (&xi) > d2))
-		{
-			y[j] = xi;
-			w[j] = x[i].w;
-			j++;
-		}
-	}
-	return j;
-}
+	fodcontext_read (fod, f);
+	detection_input (g, fod, 1.0f);
 
-
-static uint32_t ce30_fread (v3f32 y[], float w[], FILE * f)
-{
-	ASSERT_PARAM_NOTNULL(y);
-	ASSERT_PARAM_NOTNULL(w);
-	ASSERT_PARAM_NOTNULL(f);
-	v4f32 x[CE30_WH];
-	//pc->framenr = (float)ftell(f) / (float)(sizeof (float) * LIDAR_WH * POINT_STRIDE);
-	//printf ("Framenr: %i\n", pc->framenr);
-	//sizeof (float) * POINT_STRIDE * LIDAR_WH
-	int r = fread (x, sizeof(x), 1, f);
-	ASSERTF (r == 1, "fread %i", r);
-	uint32_t n = ce30_filter1 (x, y, w, 0.0f);
-	ASSERT_LTEU (n, CE30_WH);
-	return n;
-}
-
-
-void loop_stdin (struct graphics * g, FILE * f)
-{
-	v3f32 x[CE30_WH]; //Pointcloud points position
-	float a[CE30_WH]; //Pointcloud points amplitude
-	uint32_t n;
 	while (1)
 	{
-		n = ce30_fread (x, a, f);
-		//XLOG (XLOG_INF, "Number of points: %i\n", n);
-		detection_input (g, n, x, a);
+		fodcontext_read (fod, f);
+		detection_input (g, fod, 0.1f);
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
 }
 
 
 
-void loop_file (struct graphics * g, FILE * f)
+void loop_file (struct graphics * g, struct fodcontext * fod, FILE * f)
 {
-	v3f32 x[CE30_WH]; //Pointcloud points position
-	float a[CE30_WH]; //Pointcloud points amplitude
-	uint32_t n;
+	fodcontext_read (fod, f);
+	detection_input (g, fod, 1.0f);
+	fodcontext_read (fod, f);
+	detection_input (g, fod, 1.0f);
 	int c = '\n';
 	while (1)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
-		//Read pointcloud from file (f). Points are stored in (x) and amplitude (a).
-		n = ce30_fread (x, a, f);
-		detection_input (g, n, x, a);
+		fodcontext_read (fod, f);
+		detection_input (g, fod, 0.01f);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 		if (c == 'q'){return;}
@@ -160,6 +123,9 @@ int main (int argc, char const * argv[])
 	g.points.count = CE30_WH*2;
 	graphics_init (&g, mainarg.address);
 
+
+	struct fodcontext * fod = calloc (1, sizeof(struct fodcontext));
+
 	FILE * f = NULL;
 	if (mainarg.filename)
 	{
@@ -182,12 +148,12 @@ int main (int argc, char const * argv[])
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from STDIN");
 		//printf ("[INFO] Reading from STDIN\n");
-		loop_stdin (&g, f);
+		loop_stdin (&g, fod, f);
 	}
 	else if (f != NULL)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from file %s", mainarg.filename);
-		loop_file (&g, f);
+		loop_file (&g, fod, f);
 	}
 	else
 	{

@@ -48,7 +48,7 @@ static uint32_t ce30_filter1 (v4f32 x[], v3f32 y[], float w[], float d2)
 	for (uint32_t i = 0; i < CE30_WH; ++i)
 	{
 		v3f32 xi = {{x[i].x, x[i].y, x[i].z}};
-		if (v3f32_norm2 (&xi) > d2)
+		if (1 && (v3f32_norm2 (&xi) > d2))
 		{
 			y[j] = xi;
 			w[j] = x[i].w;
@@ -90,6 +90,7 @@ void loop_stdin (struct poitracker * pc, struct graphics * g, FILE * f)
 }
 
 
+static v3f32 x0[CE30_WH]; //Pointcloud points position
 
 void loop_file (struct poitracker * pc, struct graphics * g, FILE * f)
 {
@@ -102,6 +103,11 @@ void loop_file (struct poitracker * pc, struct graphics * g, FILE * f)
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
 		//Read pointcloud from file (f). Points are stored in (x) and amplitude (a).
 		n = ce30_fread (x, a, f);
+		for (uint32_t i = 0; i < n; ++i)
+		{
+			v3f32_add_mul(x0 + i, x0 + i, x + i, 0.5f, 0.5f);
+			x[i] = x0[i];
+		}
 		detection_input (g, pc, n, x, a);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
