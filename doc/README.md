@@ -11,6 +11,7 @@
 A false estimation of the ground can happen when sampling is done between ground points and object points.
 
 ![sample_problem](sample_problem.png)
+![sample_problem](sample_problem1.png)
 
 
 ## Multiple clusters
