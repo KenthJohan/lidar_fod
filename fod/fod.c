@@ -15,8 +15,7 @@
 #include "csc/csc_xlog.h"
 
 #include "../shared/ce30.h"
-
-#include "mg_send.h"
+#include "../shared/mg_send.h"
 
 #include "detection.h"
 #include "graphics.h"

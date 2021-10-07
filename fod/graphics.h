@@ -15,9 +15,9 @@
 
 #include "misc.h"
 
-#include "mg_attr.h"
-#include "mg_comp.h"
-#include "mg_send.h"
+#include "../shared/mg_attr.h"
+#include "../shared/mg_comp.h"
+#include "../shared/mg_send.h"
 #include "myent.h"
 
 #include "pointcloud.h"
