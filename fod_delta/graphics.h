@@ -226,7 +226,7 @@ static void graphics_draw_pointcloud_cid (struct graphics * g, uint32_t n, v3f32
 }
 
 
-static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f32 const x[], float const a[])
+static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f32 const x[], float const a[], float ak)
 {
 	uint32_t last = g->points.last;
 	v4f32 * pos = g->points.pos + last;
@@ -235,7 +235,7 @@ static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f
 	for (uint32_t i = 0; i < n; ++i)
 	{
 		float w;
-		w = CLAMP(a[i], 0.0f, 255.0f);
+		w = CLAMP(a[i]*ak, 0.0f, 255.0f);
 		col[i].r = (uint8_t)(w);
 		col[i].g = (uint8_t)(w);
 		col[i].b = (uint8_t)(w);

@@ -27,6 +27,9 @@
 #ifndef FLT_MAX
 #define FLT_MAX __FLT_MAX__
 #endif
+#ifndef FLT_MIN
+#define FLT_MIN __FLT_MIN__
+#endif
 #ifndef DBL_EPSILON
 #define DBL_EPSILON __DBL_EPSILON__
 #endif

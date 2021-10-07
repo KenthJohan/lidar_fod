@@ -42,12 +42,12 @@ struct
 void loop_stdin (struct graphics * g, struct fodcontext * fod, FILE * f)
 {
 	fodcontext_read (fod, f);
-	detection_input (g, fod, 1.0f);
+	detection_input (g, fod, 1.0f, '0');
 
 	while (1)
 	{
 		fodcontext_read (fod, f);
-		detection_input (g, fod, 0.1f);
+		detection_input (g, fod, 0.1f, '0');
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
 }
@@ -57,18 +57,18 @@ void loop_stdin (struct graphics * g, struct fodcontext * fod, FILE * f)
 void loop_file (struct graphics * g, struct fodcontext * fod, FILE * f)
 {
 	fodcontext_read (fod, f);
-	detection_input (g, fod, 1.0f);
+	detection_input (g, fod, 1.0f, '0');
 	fodcontext_read (fod, f);
-	detection_input (g, fod, 1.0f);
+	detection_input (g, fod, 1.0f, '0');
 	int c = '\n';
 	while (1)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
-		fodcontext_read (fod, f);
-		detection_input (g, fod, 0.01f);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 		if (c == 'q'){return;}
+		fodcontext_read (fod, f);
+		detection_input (g, fod, 1.0f, c);
 	}
 }
 

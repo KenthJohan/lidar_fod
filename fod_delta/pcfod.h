@@ -10,6 +10,7 @@
 #include "misc.h"
 #include "../shared/ce30.h"
 
+#define FODFLAG_ZERO 0x01
 
 struct fodcontext
 {
@@ -18,7 +19,7 @@ struct fodcontext
 	v3f32 pc_x1[CE30_WH];
 	v3f32 pc_xd[CE30_WH];
 	float pc_amplitude1[CE30_WH];
-	uint8_t cid[CE30_WH];
+	uint8_t pc_flags[CE30_WH];
 	float pc_alpha[CE30_WH];
 };
 
