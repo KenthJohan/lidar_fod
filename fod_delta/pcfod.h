@@ -10,7 +10,7 @@
 #include "misc.h"
 #include "../shared/ce30.h"
 
-#define FODFLAG_ZERO 0x01
+#define FODFLAG_ZERO 0x10
 
 struct fodcontext
 {

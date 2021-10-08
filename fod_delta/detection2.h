@@ -47,6 +47,41 @@ static void detection_input (struct graphics * g, struct fodcontext * fod, float
 		}
 	}
 
+	for(int32_t x = 1; x < CE30_W-1; ++x)
+	for(int32_t y = 1; y < CE30_H-1; ++y)
+	{
+		// 00 01 02
+		// 10 11 12
+		// 20 21 22
+		int32_t i = CE30_XY_INDEX(x, y);
+		int32_t i00 = CE30_XY_INDEX(x-1, y-1);
+		int32_t i01 = CE30_XY_INDEX(x  , y-1);
+		int32_t i02 = CE30_XY_INDEX(x+1, y-1);
+
+		int32_t i20 = CE30_XY_INDEX(x-1, y+1);
+		int32_t i21 = CE30_XY_INDEX(x  , y+1);
+		int32_t i22 = CE30_XY_INDEX(x+1, y+1);
+
+		int32_t i10 = CE30_XY_INDEX(x-1, y);
+		int32_t i12 = CE30_XY_INDEX(x+1, y);
+
+		if (v3f32_norm2(x1 + i) < 1.0f)
+		{
+			if (v3f32_norm2 (x1 + i00) > 1.0f){flags[i00] |= POINTLABEL_OBJ;}
+			if (v3f32_norm2 (x1 + i01) > 1.0f){flags[i01] |= POINTLABEL_OBJ;}
+			if (v3f32_norm2 (x1 + i02) > 1.0f){flags[i02] |= POINTLABEL_OBJ;}
+			if (v3f32_norm2 (x1 + i20) > 1.0f){flags[i20] |= POINTLABEL_OBJ;}
+			if (v3f32_norm2 (x1 + i21) > 1.0f){flags[i21] |= POINTLABEL_OBJ;}
+			if (v3f32_norm2 (x1 + i22) > 1.0f){flags[i22] |= POINTLABEL_OBJ;}
+			if (v3f32_norm2 (x1 + i10) > 1.0f){flags[i10] |= POINTLABEL_OBJ;}
+			if (v3f32_norm2 (x1 + i12) > 1.0f){flags[i12] |= POINTLABEL_OBJ;}
+		}
+
+
+	}
+
+
+
 	// Calculate position delta (xd = x1 - x0):
 	v3f32_subv (xd, x1, x0, 1, 1, 1, CE30_WH);
 	memcpy (x0, x1, sizeof(v3f32) * CE30_WH);
@@ -88,7 +123,8 @@ static void detection_input (struct graphics * g, struct fodcontext * fod, float
 		}
 		printf ("(%f, %f), avg: %f\n", amin, amax, aavg/j);
 	}
-	graphics_draw_pointcloud_alpha (g, CE30_WH, x1, alpha, 2000.0f);
+	//graphics_draw_pointcloud_alpha (g, CE30_WH, x1, alpha, 2000.0f);
+	graphics_draw_pointcloud_cid (g, CE30_WH, x1, flags);
 	graphics_flush (g);
 }
 
