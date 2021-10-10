@@ -30,10 +30,13 @@
 
 
 static uint32_t detection_sample
-(struct graphics * g, struct poitracker * trackers, uint32_t n, v3f32 const x[], int32_t sample_index, uint32_t flag, struct fodcontext * fod)
+(struct graphics * g, struct poitracker * trackers, int32_t sample_index, uint32_t flag, struct fodcontext * fod)
 {
-	uint8_t * cid = fod->cid;
-	if ((cid[sample_index] & FODPOINT_GOOD) == 0)
+	uint8_t * cid = fod->pc_flags;
+	v3f32 const * x = fod->pc_x1;
+
+
+	if ((cid[sample_index] & POINT_GOOD) == 0)
 	{
 		return DECTECT_FAILED;
 	}
@@ -51,17 +54,17 @@ static uint32_t detection_sample
 	{
 		// Copy (n) amount of points (x) at position (s) within sphere to (x1):
 		// Where (m) is number of point in ball:
-		m = v3f32_ball (x, n, s, x1, DETECT_BALL_RADIUS);
+		m = v3f32_ball (x, CE30_WH, s, x1, DETECT_BALL_RADIUS);
 
 		// Visual only:
-		for(uint32_t i = 0; i < n; ++i)
+		for(uint32_t i = 0; i < CE30_WH; ++i)
 		{
 			v3f32 d;
 			v3f32_sub (&d, x + i, s);
 			if (v3f32_norm2 (&d) < DETECT_BALL_RADIUS2)
 			{
 				// Tag this point as part of ball:
-				cid[i] |= POINTLABEL_SEARCH;
+				cid[i] |= POINT_SEARCH;
 			}
 		}
 
@@ -121,8 +124,8 @@ static uint32_t detection_sample
 		// Rectify pointcloud:
 		// Rotate the pointcloud using rotation matrix:
 		v3f32 x2[CE30_WH];
-		v3f32_subv (x2, x, &o, 1, 1, 0, n);
-		pointcloud_rotate ((m3f32 *)e, x2, x1, n); // (x1) := e (x2)
+		v3f32_subv (x2, x, &o, 1, 1, 0, CE30_WH);
+		pointcloud_rotate ((m3f32 *)e, x2, x1, CE30_WH); // (x1) := e (x2)
 	}
 
 
@@ -137,15 +140,15 @@ static uint32_t detection_sample
 		//          \\=//
 		//            0
 		//          LIDAR
-		int32_t a = MAX(sample_index - DETECT_ARCLENGTH, 0);
-		int32_t b = MIN(sample_index + DETECT_ARCLENGTH, (int32_t)n);
+		int32_t a = MAX (sample_index - DETECT_ARCLENGTH, 0);
+		int32_t b = MIN (sample_index + DETECT_ARCLENGTH, (int32_t)CE30_WH);
 		int32_t iobj[CE30_WH]; // Indices to points that are above the ground
 		uint32_t j = 0; // Number of points above the ground
 		for (int32_t i = a; i < b; ++i)
 		{
-			if ((cid[i] & FODPOINT_GOOD) == 0) {continue;;}
+			if ((cid[i] & POINT_GOOD) == 0) {continue;;}
 			// Visual only:
-			cid[i] |= POINTLABEL_SECTOR;
+			cid[i] |= POINT_SECTOR;
 
 			// Check if point is above the ground:
 			float x = x1[i].x;
@@ -155,7 +158,7 @@ static uint32_t detection_sample
 				iobj[j] = i;
 				j++;
 				// Visual only:
-				cid[i] |= POINTLABEL_OBJ;
+				cid[i] |= POINT_ABOVE;
 			}
 		}
 
@@ -165,10 +168,10 @@ static uint32_t detection_sample
 			// Simple cluster selection.
 			// Randomly selected point is garanteed to belong to only one cluster:
 			int32_t i = iobj[rand() % j];
-			ASSERT (i < (int32_t)n);
+			ASSERT (i < (int32_t)CE30_WH);
 			ASSERT (i >= a);
 			ASSERT (i <= b);
-			if (cid[i] & FODPOINT_GOOD)
+			if (cid[i] & POINT_GOOD)
 			{
 				poitracker_update (trackers, x + i, sample_index);
 				if (g)
@@ -197,10 +200,10 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 
 	{
 		int32_t randomi = rand() % CE30_WH;
-		detection_sample (g, tracker, CE30_WH, x, randomi, DETECT_FLAG_RANDOM, fod);
+		detection_sample (g, tracker, randomi, DETECT_FLAG_RANDOM, fod);
 #ifdef ENABLE_GRAPHIC
 		graphics_draw_obj (g, x + randomi, 0.05f, (u8rgba){{0x99, 0x33, 0xFF, 0xAA}});
-		graphics_draw_pointcloud_cid (g, CE30_WH, x, fod->cid);
+		graphics_draw_pointcloud_cid (g, CE30_WH, x, fod->pc_flags);
 #endif
 	}
 
@@ -213,7 +216,7 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 			int32_t randomi = tracker->i[i];
 			int32_t spread = (rand() % (TRACKER_RESCAN_RADIUS*2)) - TRACKER_RESCAN_RADIUS;
 			randomi = CLAMP(randomi + spread, 0, CE30_WH);
-			detection_sample (NULL, tracker, CE30_WH, x, randomi, 0, fod);
+			detection_sample (NULL, tracker, randomi, 0, fod);
 			//graphics_flush (g);
 		}
 	}

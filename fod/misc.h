@@ -64,13 +64,7 @@
 
 
 
-
-// Visual only:
 #define ENABLE_GRAPHIC
-#define POINTLABEL_EDGE 0x08 //Not used.
-#define POINTLABEL_OBJ 0x04 //Points above ground thus potential objects.
-#define POINTLABEL_SECTOR 0x02 //This is a sector from LiDAR origin where objects can be labeled.
-#define POINTLABEL_SEARCH 0x01 //This is all points that define PCA.
 
 
 

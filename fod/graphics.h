@@ -21,6 +21,7 @@
 #include "myent.h"
 
 #include "pointcloud.h"
+#include "pcfod.h"
 
 
 #define GRAPHICVERTS_MAXITEMS 100000
@@ -185,22 +186,22 @@ static void graphics_init (nng_socket sock)
 u8rgba graphics_cid (uint8_t id)
 {
 
-	if (id & POINTLABEL_OBJ)
+	if (id & POINT_ABOVE)
 	{
 		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0x66, .a = 0xFF};
 	}
 
-	if (id & POINTLABEL_EDGE)
+	if (id & POINT_EDGE)
 	{
 		return (u8rgba) {.r = 0xFF, .g = 0xB8, .b = 0xFD, .a = 0xFF};
 	}
 
-	if (id & POINTLABEL_SEARCH)
+	if (id & POINT_SEARCH)
 	{
 		return (u8rgba) {.r = 0xBB, .g = 0xBB, .b = 0xBB, .a = 0xFF};
 	}
 
-	if (id & POINTLABEL_SECTOR)
+	if (id & POINT_SECTOR)
 	{
 		return (u8rgba) {.r = 0x66, .g = 0x66, .b = 0x66, .a = 0xFF};
 	}
