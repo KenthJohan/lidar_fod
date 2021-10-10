@@ -19,6 +19,7 @@
 
 #include "detection.h"
 #include "graphics.h"
+#include "pcfod.h"
 
 
 
@@ -38,76 +39,28 @@ struct
 } mainarg;
 
 
-static uint32_t ce30_filter1 (v4f32 x[], v3f32 y[], float w[], float d2)
+
+void loop_stdin (struct poitracker * pc, struct fodcontext * fod, struct graphics * g, FILE * f)
 {
-	ASSERT_PARAM_NOTNULL(x);
-	ASSERT_PARAM_NOTNULL(y);
-	ASSERT_PARAM_NOTNULL(w);
-	uint32_t j = 0;
-	for (uint32_t i = 0; i < CE30_WH; ++i)
-	{
-		v3f32 xi = {{x[i].x, x[i].y, x[i].z}};
-		if (1 && (v3f32_norm2 (&xi) > d2))
-		{
-			y[j] = xi;
-			w[j] = x[i].w;
-			j++;
-		}
-	}
-	return j;
-}
-
-
-static uint32_t ce30_fread (v3f32 y[], float w[], FILE * f)
-{
-	ASSERT_PARAM_NOTNULL(y);
-	ASSERT_PARAM_NOTNULL(w);
-	ASSERT_PARAM_NOTNULL(f);
-	v4f32 x[CE30_WH];
-	//pc->framenr = (float)ftell(f) / (float)(sizeof (float) * LIDAR_WH * POINT_STRIDE);
-	//printf ("Framenr: %i\n", pc->framenr);
-	//sizeof (float) * POINT_STRIDE * LIDAR_WH
-	int r = fread (x, sizeof(x), 1, f);
-	ASSERTF (r == 1, "fread %i", r);
-	uint32_t n = ce30_filter1 (x, y, w, 1.0f);
-	return n;
-}
-
-
-void loop_stdin (struct poitracker * pc, struct graphics * g, FILE * f)
-{
-	v3f32 x[CE30_WH]; //Pointcloud points position
-	float a[CE30_WH]; //Pointcloud points amplitude
-	uint32_t n;
 	while (1)
 	{
-		n = ce30_fread (x, a, f);
-		//XLOG (XLOG_INF, "Number of points: %i\n", n);
-		detection_input (g, pc, n, x, a);
+		fodcontext_read (fod, f);
+		detection_input (g, pc, fod);
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
 }
 
 
-static v3f32 x0[CE30_WH]; //Pointcloud points position
 
-void loop_file (struct poitracker * pc, struct graphics * g, FILE * f)
+
+void loop_file (struct poitracker * pc, struct fodcontext * fod, struct graphics * g, FILE * f)
 {
-	v3f32 x[CE30_WH]; //Pointcloud points position
-	float a[CE30_WH]; //Pointcloud points amplitude
-	uint32_t n;
 	int c = '\n';
 	while (1)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
-		//Read pointcloud from file (f). Points are stored in (x) and amplitude (a).
-		n = ce30_fread (x, a, f);
-		for (uint32_t i = 0; i < n; ++i)
-		{
-			v3f32_add_mul(x0 + i, x0 + i, x + i, 0.5f, 0.5f);
-			x[i] = x0[i];
-		}
-		detection_input (g, pc, n, x, a);
+		fodcontext_read (fod, f);
+		detection_input (g, pc, fod);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 		if (c == 'q'){return;}
@@ -167,6 +120,8 @@ int main (int argc, char const * argv[])
 	struct poitracker tracker;
 	poitracker_init (&tracker);
 
+	struct fodcontext * fodctx = calloc(1, sizeof (struct fodcontext));
+
 	FILE * f = NULL;
 	if (mainarg.filename)
 	{
@@ -189,12 +144,12 @@ int main (int argc, char const * argv[])
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from STDIN");
 		//printf ("[INFO] Reading from STDIN\n");
-		loop_stdin (&tracker, &g, f);
+		loop_stdin (&tracker, fodctx, &g, f);
 	}
 	else if (f != NULL)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from file %s", mainarg.filename);
-		loop_file (&tracker, &g, f);
+		loop_file (&tracker, fodctx, &g, f);
 	}
 	else
 	{

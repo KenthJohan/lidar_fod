@@ -19,6 +19,7 @@
 #include "graphics.h"
 #include "tracker.h"
 #include "pointcloud.h"
+#include "pcfod.h"
 
 
 #define DECTECT_FAILED 0
@@ -29,8 +30,14 @@
 
 
 static uint32_t detection_sample
-(struct graphics * g, struct poitracker * trackers, uint32_t n, v3f32 x[], uint8_t cid[CE30_WH], int32_t sample_index, uint32_t flag)
+(struct graphics * g, struct poitracker * trackers, uint32_t n, v3f32 const x[], int32_t sample_index, uint32_t flag, struct fodcontext * fod)
 {
+	uint8_t * cid = fod->cid;
+	if ((cid[sample_index] & FODPOINT_GOOD) == 0)
+	{
+		return DECTECT_FAILED;
+	}
+
 	// Select sample coordinate
 	v3f32 const * s = x + sample_index;
 
@@ -136,6 +143,7 @@ static uint32_t detection_sample
 		uint32_t j = 0; // Number of points above the ground
 		for (int32_t i = a; i < b; ++i)
 		{
+			if ((cid[i] & FODPOINT_GOOD) == 0) {continue;;}
 			// Visual only:
 			cid[i] |= POINTLABEL_SECTOR;
 
@@ -160,10 +168,13 @@ static uint32_t detection_sample
 			ASSERT (i < (int32_t)n);
 			ASSERT (i >= a);
 			ASSERT (i <= b);
-			poitracker_update (trackers, x + i, sample_index);
-			if (g)
+			if (cid[i] & FODPOINT_GOOD)
 			{
-				graphics_draw_obj (g, x + i, 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
+				poitracker_update (trackers, x + i, sample_index);
+				if (g)
+				{
+					graphics_draw_obj (g, x + i, 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
+				}
 			}
 		}
 
@@ -177,25 +188,19 @@ static uint32_t detection_sample
 
 
 
-static void detection_input (struct graphics * g, struct poitracker * tracker, int32_t n, v3f32 x[], float amp[])
+static void detection_input (struct graphics * g, struct poitracker * tracker, struct fodcontext * fod)
 {
-	UNUSED (amp);
-	if (n < MIN_POINTS_IN_LIDAR)
-	{
-		return;
-	}
-
-
-	// Visual only:
-	uint8_t cid[CE30_WH];
-	memset (cid, 0, sizeof(uint8_t)*CE30_WH);
+	ASSERT_PARAM_NOTNULL (g);
+	ASSERT_PARAM_NOTNULL (tracker);
+	ASSERT_PARAM_NOTNULL (fod);
+	v3f32 * x = fod->pc_x1;
 
 	{
-		int32_t randomi = (rand() % n);
-		detection_sample (g, tracker, n, x, cid, randomi, DETECT_FLAG_RANDOM);
+		int32_t randomi = rand() % CE30_WH;
+		detection_sample (g, tracker, CE30_WH, x, randomi, DETECT_FLAG_RANDOM, fod);
 #ifdef ENABLE_GRAPHIC
 		graphics_draw_obj (g, x + randomi, 0.05f, (u8rgba){{0x99, 0x33, 0xFF, 0xAA}});
-		graphics_draw_pointcloud_cid (g, n, x, cid);
+		graphics_draw_pointcloud_cid (g, CE30_WH, x, fod->cid);
 #endif
 	}
 
@@ -207,8 +212,8 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, i
 			//printf ("Recheck tracker %i\n", i);
 			int32_t randomi = tracker->i[i];
 			int32_t spread = (rand() % (TRACKER_RESCAN_RADIUS*2)) - TRACKER_RESCAN_RADIUS;
-			randomi = CLAMP(randomi + spread, 0, n);
-			detection_sample (NULL, tracker, n, x, cid, randomi, 0);
+			randomi = CLAMP(randomi + spread, 0, CE30_WH);
+			detection_sample (NULL, tracker, CE30_WH, x, randomi, 0, fod);
 			//graphics_flush (g);
 		}
 	}

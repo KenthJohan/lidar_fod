@@ -1,3 +1,8 @@
+## Info
+* The `/fod` folder contains complete object detection.
+* The `/fod_delta` checks the movement of the points.
+* The `/fod2` is a new version of object detection which is not complete yet.
+
 ## Setup Samba
 
 ```bash
@@ -6,14 +11,14 @@ sudo nano /etc/samba/smb.conf
 
 ```bash
 [no_password_folder]
-    path = /home
-    writeable = yes
-    guest ok = yes
-    writable = yes
-    available = yes
-    browsable = yes
-    public = yes
-    force user = root
+	path = /home
+	writeable = yes
+	guest ok = yes
+	writable = yes
+	available = yes
+	browsable = yes
+	public = yes
+	force user = root
 ```
 
 

@@ -47,25 +47,27 @@ static void detection_input (struct graphics * g, struct fodcontext * fod, float
 		}
 	}
 
+
+	// Detect near 90 deg angle of incidence:
 	for(int32_t x = 1; x < CE30_W-1; ++x)
 	for(int32_t y = 1; y < CE30_H-1; ++y)
 	{
-		// 00 01 02
-		// 10 11 12
-		// 20 21 22
-		int32_t i = CE30_XY_INDEX(x, y);
+		// 00 01 02   nw nn ne
+		// 10 11 12 = ww xy ee
+		// 20 21 22   sw ss se
+		int32_t i11 = CE30_XY_INDEX(x ,  y );
+		// 00 01 02:
 		int32_t i00 = CE30_XY_INDEX(x-1, y-1);
 		int32_t i01 = CE30_XY_INDEX(x  , y-1);
 		int32_t i02 = CE30_XY_INDEX(x+1, y-1);
-
+		// 20 21 22:
 		int32_t i20 = CE30_XY_INDEX(x-1, y+1);
 		int32_t i21 = CE30_XY_INDEX(x  , y+1);
 		int32_t i22 = CE30_XY_INDEX(x+1, y+1);
-
-		int32_t i10 = CE30_XY_INDEX(x-1, y);
-		int32_t i12 = CE30_XY_INDEX(x+1, y);
-
-		if (v3f32_norm2(x1 + i) < 1.0f)
+		// 10 12:
+		int32_t i10 = CE30_XY_INDEX(x-1, y  );
+		int32_t i12 = CE30_XY_INDEX(x+1, y  );
+		if (v3f32_norm2(x1 + i11) < 1.0f)
 		{
 			if (v3f32_norm2 (x1 + i00) > 1.0f){flags[i00] |= POINTLABEL_OBJ;}
 			if (v3f32_norm2 (x1 + i01) > 1.0f){flags[i01] |= POINTLABEL_OBJ;}
@@ -76,8 +78,6 @@ static void detection_input (struct graphics * g, struct fodcontext * fod, float
 			if (v3f32_norm2 (x1 + i10) > 1.0f){flags[i10] |= POINTLABEL_OBJ;}
 			if (v3f32_norm2 (x1 + i12) > 1.0f){flags[i12] |= POINTLABEL_OBJ;}
 		}
-
-
 	}
 
 

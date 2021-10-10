@@ -184,14 +184,15 @@ static void graphics_init (nng_socket sock)
 
 u8rgba graphics_cid (uint8_t id)
 {
-	if (id & POINTLABEL_CLUSTER)
-	{
-		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0xFF, .a = 0xFF};
-	}
 
 	if (id & POINTLABEL_OBJ)
 	{
 		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0x66, .a = 0xFF};
+	}
+
+	if (id & POINTLABEL_EDGE)
+	{
+		return (u8rgba) {.r = 0xFF, .g = 0xB8, .b = 0xFD, .a = 0xFF};
 	}
 
 	if (id & POINTLABEL_SEARCH)
@@ -299,7 +300,7 @@ static void graphics_draw_pca (struct graphics * g, v3f32 const e[3], float cons
 
 
 
-static void graphics_draw_obj (struct graphics * g, v3f32 * x, float r, u8rgba color)
+static void graphics_draw_obj (struct graphics * g, v3f32 const * x, float r, u8rgba color)
 {
 	uint32_t last = g->lines.last;
 	v4f32 * pos = g->lines.pos + last;
