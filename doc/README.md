@@ -36,3 +36,11 @@ When doing a local sample of the pointcloud there is a chance that it will fail 
 Its smart to remember the last sample position of a successfull detection. The end of the bluelines represent the sample position and the other end represent object position.
 
 ![smart_sampling](smart_sampling.png)
+
+
+## Edge Detect. Near 90 deg angle of incidence i.e. no reflection
+Object has a geometry that wraps around it self thus it will have a edge where LIDAR reflaction incidence is near or equal 90 degress which make is physicly imposseable to reflect.
+
+![edge1](edge1.png)
+![edge2](edge2.png)
+![edge3](edge3.png)
