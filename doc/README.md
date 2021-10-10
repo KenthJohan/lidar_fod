@@ -39,7 +39,7 @@ Its smart to remember the last sample position of a successfull detection. The e
 
 
 ## Edge Detect. Near 90 deg angle of incidence i.e. no reflection
-Object has a geometry that wraps around it self thus it will have a edge where LIDAR reflaction incidence is near or equal 90 degress which make is physicly imposseable to reflect.
+Objects have geometry that wraps around it self thus it will have a edge where LIDAR reflaction incidence is near or equal 90 degress which makes it physicly impossible to reflect.
 
 ![edge1](edge1.png)
 ![edge2](edge2.png)
