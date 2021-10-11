@@ -10,7 +10,6 @@
 #include "misc.h"
 #include "../shared/ce30.h"
 
-#define FODFLAG_ZERO 0x10
 
 struct fodcontext
 {
@@ -23,18 +22,14 @@ struct fodcontext
 	float pc_alpha[CE30_WH];
 };
 
+
 static void fodcontext_read (struct fodcontext * fod, FILE * f)
 {
-	for (uint32_t i = 0; i < 5; ++i)
-	{
-		int r = fread (fod->pc_src, sizeof(v4f32)*CE30_WH, 1, f);
-		ASSERTF (r == 1, "fread %i", r);
-	}
-	for (uint32_t i = 0; i < CE30_WH; ++i)
-	{
-		fod->pc_x1[i].x = fod->pc_src[i].x;
-		fod->pc_x1[i].y = fod->pc_src[i].y;
-		fod->pc_x1[i].z = fod->pc_src[i].z;
-		fod->pc_amplitude1[i] = fod->pc_src[i].w;
-	}
+	ASSERT_PARAM_NOTNULL(fod);
+	ASSERT_PARAM_NOTNULL(f);
+	// Read 5 frames from CE30 LiDAR because it updates pointcloud per 5 frame.
+	ce30_read (f, fod->pc_src, 5);
+	memset (fod->pc_flags, 0, sizeof(uint8_t)*CE30_WH);
+	ce30_xyzw_to_pos_amp_flags (fod->pc_src, fod->pc_x1, fod->pc_amplitude1, fod->pc_flags);
+	ce30_detect_incidence_edges (fod->pc_flags);
 }

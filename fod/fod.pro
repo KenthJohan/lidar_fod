@@ -24,6 +24,7 @@ HEADERS += pointcloud.h
 HEADERS += detection.h
 HEADERS += tracker.h
 HEADERS += graphics.h
+HEADERS += pcfod.h
 HEADERS += ../shared/mg_comp.h
 HEADERS += ../shared/mg_attr.h
 HEADERS += ../shared/mg_send.h

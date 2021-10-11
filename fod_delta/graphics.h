@@ -21,6 +21,7 @@
 #include "myent.h"
 
 #include "pointcloud.h"
+#include "pcfod.h"
 
 
 #define GRAPHICVERTS_MAXITEMS 100000
@@ -184,22 +185,23 @@ static void graphics_init (nng_socket sock)
 
 u8rgba graphics_cid (uint8_t id)
 {
-	if (id & POINTLABEL_CLUSTER)
-	{
-		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0xFF, .a = 0xFF};
-	}
 
-	if (id & POINTLABEL_OBJ)
+	if (id & POINT_ABOVE)
 	{
 		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0x66, .a = 0xFF};
 	}
 
-	if (id & POINTLABEL_SEARCH)
+	if (id & POINT_EDGE)
+	{
+		return (u8rgba) {.r = 0xFF, .g = 0xB8, .b = 0xFD, .a = 0xFF};
+	}
+
+	if (id & POINT_SEARCH)
 	{
 		return (u8rgba) {.r = 0xBB, .g = 0xBB, .b = 0xBB, .a = 0xFF};
 	}
 
-	if (id & POINTLABEL_SECTOR)
+	if (id & POINT_SECTOR)
 	{
 		return (u8rgba) {.r = 0x66, .g = 0x66, .b = 0x66, .a = 0xFF};
 	}
@@ -226,7 +228,7 @@ static void graphics_draw_pointcloud_cid (struct graphics * g, uint32_t n, v3f32
 }
 
 
-static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f32 const x[], float const a[], float ak)
+static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f32 const x[], float const a[])
 {
 	uint32_t last = g->points.last;
 	v4f32 * pos = g->points.pos + last;
@@ -235,7 +237,7 @@ static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f
 	for (uint32_t i = 0; i < n; ++i)
 	{
 		float w;
-		w = CLAMP(a[i]*ak, 0.0f, 255.0f);
+		w = CLAMP(a[i] * 4.0f, 0.0f, 255.0f);
 		col[i].r = (uint8_t)(w);
 		col[i].g = (uint8_t)(w);
 		col[i].b = (uint8_t)(w);
@@ -267,7 +269,7 @@ static void graphics_draw_pca (struct graphics * g, v3f32 const e[3], float cons
 	v4f32_set_xyzw (pos + 0, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 2, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 4, c->x, c->y, c->z, 0.0f);
-	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*2);
+	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*DETECT_MIN_EIGEN_FACTOR);
 	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1])*l);
 	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2])*l);
 	col[0] = col_x;
@@ -299,7 +301,7 @@ static void graphics_draw_pca (struct graphics * g, v3f32 const e[3], float cons
 
 
 
-static void graphics_draw_obj (struct graphics * g, v3f32 * x, float r, u8rgba color)
+static void graphics_draw_obj (struct graphics * g, v3f32 const * x, float r, u8rgba color)
 {
 	uint32_t last = g->lines.last;
 	v4f32 * pos = g->lines.pos + last;
