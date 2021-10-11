@@ -36,7 +36,7 @@ static void detection_input (struct graphics * g, struct fodcontext * fod, float
 
 	for(int32_t i = 0; i < CE30_WH; ++i)
 	{
-		if (flags[i] & POINT_GOOD)
+		if (flags[i] & CE30_POINT_GOOD)
 		{
 			float l = v3f32_norm (xd + i);
 			//  alpha[i] = (alpha[i] * (1.0f - k)) + (l * k);
@@ -56,7 +56,7 @@ static void detection_input (struct graphics * g, struct fodcontext * fod, float
 		float j = 0.0f;
 		for(int32_t i = 0; i < CE30_WH; ++i)
 		{
-			if ((flags[i] & POINT_GOOD) && (alpha[i] > 0.0f))
+			if ((flags[i] & CE30_POINT_GOOD) && (alpha[i] > 0.0f))
 			{
 				//printf ("%05i: %f\n", i, v3f32_norm(x1 + i));
 				//printf ("%05i: %f\n", i, alpha[i]);

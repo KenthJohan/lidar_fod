@@ -36,7 +36,7 @@ static uint32_t detection_sample
 	v3f32 const * x = fod->pc_x1;
 
 
-	if ((cid[sample_index] & POINT_GOOD) == 0)
+	if ((cid[sample_index] & CE30_POINT_GOOD) == 0)
 	{
 		return DECTECT_FAILED;
 	}
@@ -64,7 +64,7 @@ static uint32_t detection_sample
 			if (v3f32_norm2 (&d) < DETECT_BALL_RADIUS2)
 			{
 				// Tag this point as part of ball:
-				cid[i] |= POINT_SEARCH;
+				cid[i] |= CE30_POINT_SEARCH;
 			}
 		}
 
@@ -146,9 +146,9 @@ static uint32_t detection_sample
 		uint32_t j = 0; // Number of points above the ground
 		for (int32_t i = a; i < b; ++i)
 		{
-			if ((cid[i] & POINT_GOOD) == 0) {continue;;}
+			if ((cid[i] & CE30_POINT_GOOD) == 0) {continue;;}
 			// Visual only:
-			cid[i] |= POINT_SECTOR;
+			cid[i] |= CE30_POINT_SECTOR;
 
 			// Check if point is above the ground:
 			float x = x1[i].x;
@@ -158,7 +158,7 @@ static uint32_t detection_sample
 				iobj[j] = i;
 				j++;
 				// Visual only:
-				cid[i] |= POINT_ABOVE;
+				cid[i] |= CE30_POINT_ABOVE;
 			}
 		}
 
@@ -171,7 +171,7 @@ static uint32_t detection_sample
 			ASSERT (i < (int32_t)CE30_WH);
 			ASSERT (i >= a);
 			ASSERT (i <= b);
-			if (cid[i] & POINT_GOOD)
+			if (cid[i] & CE30_POINT_GOOD)
 			{
 				poitracker_update (trackers, x + i, sample_index);
 				if (g)
