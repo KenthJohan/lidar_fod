@@ -204,12 +204,18 @@ static uint32_t detection_sample
 
 			{
 				v3f32 xabove[CE30_WH];
-				uint32_t k = select_pca_points (x, CE30_WH, (x + fod->clusteri), xabove, DETECT_BALL_RADIUS);
+				uint32_t k = select_pca_points (x, CE30_WH, (x + fod->clusteri), xabove, 0.1f);
 				struct fodpca pca;
 				calculate_pca (&pca, xabove, k);
-				if (DETECT_MIN_GROUND_THICKNESS_RATIO2*pca.w[0] < pca.w[1])
+				if (DETECT_MIN_GROUND_THICKNESS_RATIO2*pca.w[0] > pca.w[1])
 				{
-					printf ("DECTECT_FAILED\n");
+
+				}
+				else
+				{
+					printf ("DECTECT_FAILED: %f %f < %f\n", DETECT_MIN_GROUND_THICKNESS_RATIO2, pca.w[0], pca.w[1]);
+					printf ("roll      %f\n", f32_rad_to_deg(pca.roll));
+					printf ("elevation %f\n", f32_rad_to_deg(pca.elevation));
 					return DECTECT_FAILED;
 				}
 			}
@@ -245,8 +251,8 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 		int32_t randomi;
 		for (uint32_t i = 0; i < 4; ++i)
 		{
-			randomi = rand() % CE30_WH;
-			detection_sample (tracker, randomi, fod);
+			//randomi = rand() % CE30_WH;
+			//detection_sample (tracker, randomi, fod);
 			//memset (fod->pc_flags, 0, sizeof(uint8_t)*CE30_WH);
 		}
 		randomi = rand() % CE30_WH;
@@ -264,6 +270,7 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 #endif
 	}
 
+	// Smart sampling:
 	/*
 	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 	{
@@ -295,11 +302,6 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 			graphics_draw_text (g, i, tracker->x + i, buf);
 		}
 	}
-#endif
-
-
-
-#ifdef ENABLE_GRAPHIC
 	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 	{
 		if (tracker->r[i] != FLT_MAX)
