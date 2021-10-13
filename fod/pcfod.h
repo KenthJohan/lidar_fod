@@ -10,6 +10,15 @@
 #include "misc.h"
 #include "../shared/ce30.h"
 
+struct fodpca
+{
+	v3f32 o;
+	m3f32 c;
+	v3f32 e[3];
+	float w[3];
+	float elevation;
+	float roll;
+};
 
 
 struct fodcontext
@@ -21,6 +30,10 @@ struct fodcontext
 	float pc_amplitude1[CE30_WH];
 	uint8_t pc_flags[CE30_WH];
 	float pc_alpha[CE30_WH];
+
+	struct fodpca pca;
+
+	int32_t clusteri;
 };
 
 

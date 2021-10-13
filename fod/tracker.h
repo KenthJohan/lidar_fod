@@ -95,10 +95,10 @@ static void poitracker_init (struct poitracker * tracker)
 static void poitracker_update (struct poitracker * tracker, v3f32 const * x, int32_t randomi)
 {
 	uint32_t i = poitracker_update1 (tracker->h, tracker->r, tracker->x, TRACKER_CAPACITY, x);
-	if(i < TRACKER_CAPACITY)
+	if (i < TRACKER_CAPACITY)
 	{
 		tracker->i[i] = randomi;
-		printf ("tracker %i got updated. count: %i\n", i, TRACKER_CAPACITY);
+		XLOG (XLOG_INF, XLOG_GENERAL, "tracker %i got updated\n", i);
 	}
 }
 
