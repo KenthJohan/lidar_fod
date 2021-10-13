@@ -161,7 +161,7 @@ static uint32_t detection_sample
 
 			// Check if point is above the ground:
 			float x = x1[i].x;
-			if ((x*x) > (fod->pca.w[0]*DETECT_MIN_EIGEN_FACTOR2))
+			if ((x*x) > (fod->pca.w[0]*DETECT_MIN_EIGEN_RATIO2))
 			{
 				// Store point index (i) that is above the ground:
 				iobj[j] = i;
@@ -209,7 +209,11 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 		{
 			randomi = rand() % CE30_WH;
 			detection_sample (tracker, randomi, fod);
+			//memset (fod->pc_flags, 0, sizeof(uint8_t)*CE30_WH);
 		}
+		randomi = rand() % CE30_WH;
+		detection_sample (tracker, randomi, fod);
+
 #ifdef ENABLE_GRAPHIC
 		//graphics_draw_pointcloud_alpha (g, n, x1, amp);
 		graphics_draw_pca (g, fod->pca.e, fod->pca.w, &(fod->pca.o));
@@ -222,6 +226,7 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 #endif
 	}
 
+	/*
 	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 	{
 		if (tracker->h[i] > TRACKER_MIN_HITS_RESCAN)
@@ -235,6 +240,7 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 			//graphics_flush (g);
 		}
 	}
+	*/
 
 	tracker_update2 (tracker);
 
