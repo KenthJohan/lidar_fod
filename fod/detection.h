@@ -26,7 +26,21 @@
 #define DECTECT_SUCCESS 1
 #define DETECT_FLAG_RANDOM 0x0001
 
-
+uint32_t select_pca_points (v3f32 const x[], uint32_t n, v3f32 const * c, v3f32 y[], float r)
+{
+	uint32_t m = 0;
+	for(uint32_t i = 0; i < n; ++i)
+	{
+		v3f32 d;
+		v3f32_sub (&d, x + i, c);
+		if (v3f32_norm2 (&d) < (r*r))
+		{
+			y[m] = x[i];
+			m++;
+		}
+	}
+	return m;
+}
 
 
 static uint32_t detection_sample
@@ -54,7 +68,7 @@ static uint32_t detection_sample
 	{
 		// Copy (n) amount of points (x) at position (s) within sphere to (x1):
 		// Where (m) is number of point in ball:
-		m = v3f32_ball (x, CE30_WH, s, x1, DETECT_BALL_RADIUS);
+		m = select_pca_points (x, CE30_WH, s, x1, DETECT_BALL_RADIUS);
 
 		// Visual only:
 		for(uint32_t i = 0; i < CE30_WH; ++i)

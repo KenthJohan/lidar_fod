@@ -15,11 +15,15 @@
 #define CE30_XYZW_FRAME_SIZE (sizeof(float)*4*CE30_WH)
 
 
-#define CE30_POINT_GOOD 0x10
-#define CE30_POINT_EDGE 0x08 //Not used.
-#define CE30_POINT_ABOVE 0x04 //Points above ground thus potential objects.
-#define CE30_POINT_SECTOR 0x02 //This is a sector from LiDAR origin where objects can be labeled.
-#define CE30_POINT_SEARCH 0x01 //This is all points that define PCA.
+#define CE30_POINT_GOOD 0x01
+#define CE30_POINT_ABOVE 0x02 //Points above ground thus potential objects.
+#define CE30_POINT_SECTOR 0x04 //This is a sector from LiDAR origin where objects can be labeled.
+#define CE30_POINT_SEARCH 0x08 //This is all points that define PCA.
+#define CE30_POINT_EDGE 0x10
+#define CE30_POINT_EDGEFILL 0x20
+
+
+
 #define CE30_POINT_IS_REFLECTED(p) ((p).x != 0.0f)
 #define CE30_POINT_IS_UNDEFINED(p) ((p).x == 0.0f)
 
@@ -74,6 +78,21 @@ static void ce30_detect_incidence_edges (uint8_t flags[CE30_WH])
 			if (flags[i22] & CE30_POINT_GOOD) {flags[i22] |= CE30_POINT_EDGE;}
 			if (flags[i10] & CE30_POINT_GOOD) {flags[i10] |= CE30_POINT_EDGE;}
 			if (flags[i12] & CE30_POINT_GOOD) {flags[i12] |= CE30_POINT_EDGE;}
+		}
+	}
+}
+
+
+
+static void ce30_detect_edge_direction (uint8_t flags[CE30_WH], v3f32 x[CE30_WH])
+{
+	for (int32_t u = 1; u < CE30_W-1; ++u)
+	for (int32_t v = 1; v < CE30_H-1; ++v)
+	{
+		int32_t i = CE30_XY_INDEX (u, v);
+		if (flags[i] & CE30_POINT_EDGE)
+		{
+
 		}
 	}
 }
