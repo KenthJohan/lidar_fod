@@ -43,6 +43,25 @@ uint32_t select_pca_points (v3f32 const x[], uint32_t n, v3f32 const * c, v3f32 
 }
 
 
+void calculate_pca (struct fodpca * pca, v3f32 * x1, uint32_t m)
+{
+	v3f32 * o = &(pca->o);
+	m3f32 * c = &(pca->c);
+	v3f32 * e = pca->e;
+	float * w = pca->w;
+	v3f32_set1 (o, 0.0f);
+	v3f32_meanacc (o, x1, m);
+	v3f32_subv (x1, x1, o, 1, 1, 0, m); // x1[i] := x1[i] - o[0], (where i is 0 .. m)
+	pointcloud_covariance (x1, m, c, 1.0f);
+	pointcloud_eigen (c, e, w);
+	//https://stackoverflow.com/questions/2782647/how-to-get-yaw-pitch-and-roll-from-a-3d-vector
+	pca->elevation = atan2(e[0].x, e[0].z);
+	pca->roll = asin(-e[0].y);
+}
+
+
+
+
 static uint32_t detection_sample
 (struct poitracker * trackers, int32_t sample_index, struct fodcontext * fod)
 {
@@ -96,7 +115,8 @@ static uint32_t detection_sample
 	// e : Three eigen column vectors (Shortest, Medium, Farthest) of coveriance matrix (c). Contains only orientation.
 	// w : Three eigen values (Shortest, Medium, Farthest) of coveriance matrix (c). Contains variance.
 	{
-
+		calculate_pca (&fod->pca, x1, m);
+		/*
 		v3f32 * o = &(fod->pca.o);
 		m3f32 * c = &(fod->pca.c);
 		v3f32 * e = fod->pca.e;
@@ -109,6 +129,7 @@ static uint32_t detection_sample
 		//https://stackoverflow.com/questions/2782647/how-to-get-yaw-pitch-and-roll-from-a-3d-vector
 		fod->pca.elevation = atan2(e[0].x, e[0].z);
 		fod->pca.roll = asin(-e[0].y);
+		*/
 	}
 	// End PCA calculation
 
@@ -171,18 +192,35 @@ static uint32_t detection_sample
 			}
 		}
 
+
+
+
 		// Check any point above the ground got succefully detected:
 		if (j > 0)
 		{
 			// Simple cluster selection.
 			// Randomly selected point is garanteed to belong to only one cluster:
 			fod->clusteri = iobj[rand() % j];
+
+			{
+				v3f32 xabove[CE30_WH];
+				uint32_t k = select_pca_points (x, CE30_WH, (x + fod->clusteri), xabove, DETECT_BALL_RADIUS);
+				struct fodpca pca;
+				calculate_pca (&pca, xabove, k);
+				if (DETECT_MIN_GROUND_THICKNESS_RATIO2*pca.w[0] < pca.w[1])
+				{
+					printf ("DECTECT_FAILED\n");
+					return DECTECT_FAILED;
+				}
+			}
+
+
 			ASSERT (fod->clusteri < (int32_t)CE30_WH);
 			ASSERT (fod->clusteri >= a);
 			ASSERT (fod->clusteri <= b);
 			if (cid[fod->clusteri] & CE30_POINT_GOOD)
 			{
-				poitracker_update (trackers, x + fod->clusteri, sample_index);
+				poitracker_update (trackers, (x + fod->clusteri), sample_index);
 			}
 		}
 
