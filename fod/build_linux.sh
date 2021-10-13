@@ -1,5 +1,5 @@
 gcc fod.c -ofod \
--I../shared/csc \
+-I. \
 -DNNG_STATIC_LIB \
 -lnng \
 -latomic \
