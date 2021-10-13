@@ -206,17 +206,20 @@ static uint32_t detection_sample
 				v3f32 xabove[CE30_WH];
 				uint32_t k = select_pca_points (x, CE30_WH, (x + fod->clusteri), xabove, 0.1f);
 				struct fodpca pca;
-				calculate_pca (&pca, xabove, k);
-				if (DETECT_MIN_GROUND_THICKNESS_RATIO2*pca.w[0] > pca.w[1])
+				if (k > 10)
 				{
+					calculate_pca (&pca, xabove, k);
+					if (DETECT_MIN_GROUND_THICKNESS_RATIO2*pca.w[0] > pca.w[1])
+					{
 
-				}
-				else
-				{
-					printf ("DECTECT_FAILED: %f %f < %f\n", DETECT_MIN_GROUND_THICKNESS_RATIO2, pca.w[0], pca.w[1]);
-					printf ("roll      %f\n", f32_rad_to_deg(pca.roll));
-					printf ("elevation %f\n", f32_rad_to_deg(pca.elevation));
-					return DECTECT_FAILED;
+					}
+					else
+					{
+						printf ("DECTECT_FAILED: %f %f < %f\n", DETECT_MIN_GROUND_THICKNESS_RATIO2, pca.w[0], pca.w[1]);
+						printf ("roll      %f\n", f32_rad_to_deg(pca.roll));
+						printf ("elevation %f\n", f32_rad_to_deg(pca.elevation));
+						return DECTECT_FAILED;
+					}
 				}
 			}
 
