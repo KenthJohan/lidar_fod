@@ -42,6 +42,7 @@
 
 // Detection configurations:
 #define DETECT_ARCLENGTH 700
+// Note: Changing the radius will change the ratio between shortest and medium eigen values:
 #define DETECT_BALL_RADIUS 0.2f
 #define DETECT_BALL_RADIUS2 (DETECT_BALL_RADIUS*DETECT_BALL_RADIUS)
 
@@ -215,7 +216,11 @@ uint32_t select_pca_points (v3f32 const x[], uint32_t n, v3f32 const * c, v3f32 
 
 
 
-
+// PCA will produce: orientation (e), centroid (o), variance (w) of subcloud (x1).
+// o : Centroid of subcloud (x1). i.e. subcloud offset (o) from origin (0,0,0).
+// c : 3x3 coveriance matrix of subcloud (x1). Contains orientation and variance.
+// e : Three eigen column vectors (Shortest, Medium, Farthest) of coveriance matrix (c). Contains only orientation.
+// w : Three eigen values (Shortest, Medium, Farthest) of coveriance matrix (c). Contains variance.
 void calculate_pca (struct fodpca * pca, v3f32 * x1, uint32_t m, float k)
 {
 	v3f32 * o = &(pca->o);

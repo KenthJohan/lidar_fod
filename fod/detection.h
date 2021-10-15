@@ -36,74 +36,42 @@
 static uint32_t detection_sample
 (struct poitracker * trackers, int32_t sample_index, struct fodcontext * fod)
 {
-	uint8_t * cid = fod->pc_flags;
-	v3f32 const * x = fod->pc_x1;
+	uint8_t     * tags1 = fod->pc_tags;
+	v3f32 const *    x1 = fod->pc_x1;
+	v3f32       *    x2 = fod->pc_x2;
 
 
-	if ((cid[sample_index] & CE30_POINT_GOOD) == 0)
+	if ((tags1[sample_index] & CE30_POINT_GOOD) == 0)
 	{
 		return DECTECT_FAILED;
 	}
 
-	// Select sample coordinate
-	v3f32 const * s = x + sample_index;
-
-	// Temporary subcloud:
-	v3f32 x1[CE30_WH];
-
-	// Number of point in ball:
-	uint32_t m;
 
 
 	{
+		v3f32 const * s = x1 + sample_index; // Select sample coordinate
 		// Copy (n) amount of points (x) at position (s) within sphere to (x1):
 		// Where (m) is number of point in ball:
-		m = select_pca_points (x, CE30_WH, s, x1, DETECT_BALL_RADIUS);
-
-		// Visual only:
-		for(uint32_t i = 0; i < CE30_WH; ++i)
+		// Returns Nnmber of point in ball:
+		uint32_t m = select_pca_points (x1, CE30_WH, s, x2, DETECT_BALL_RADIUS);
+		// Currently this is only good fod visualds:
+		for (uint32_t i = 0; i < CE30_WH; ++i)
 		{
 			v3f32 d;
-			v3f32_sub (&d, x + i, s);
+			v3f32_sub (&d, x1 + i, s);
 			if (v3f32_norm2 (&d) < DETECT_BALL_RADIUS2)
 			{
 				// Tag this point as part of ball:
-				cid[i] |= CE30_POINT_SEARCH;
+				tags1[i] |= CE30_POINT_SEARCH;
 			}
 		}
-
 		// Enough points must be within the sphere to make a good detection:
 		if (m < MIN_POINTS_IN_BALL)
 		{
 			return DECTECT_FAILED;
 		}
+		calculate_pca (&fod->pca_sample, x2, m, 1.0f);
 	}
-
-	// Begin PCA calculation from subcloud (x1).
-	// PCA will produce: orientation (e), centroid (o), variance (w) of subcloud (x1).
-	// o : Centroid of subcloud (x1). i.e. subcloud offset (o) from origin (0,0,0).
-	// c : 3x3 coveriance matrix of subcloud (x1). Contains orientation and variance.
-	// e : Three eigen column vectors (Shortest, Medium, Farthest) of coveriance matrix (c). Contains only orientation.
-	// w : Three eigen values (Shortest, Medium, Farthest) of coveriance matrix (c). Contains variance.
-	{
-		calculate_pca (&fod->pca, x1, m, 1.0f);
-		/*
-		v3f32 * o = &(fod->pca.o);
-		m3f32 * c = &(fod->pca.c);
-		v3f32 * e = fod->pca.e;
-		float * w = fod->pca.w;
-		v3f32_set1 (o, 0.0f);
-		v3f32_meanacc (o, x1, m);
-		v3f32_subv (x1, x1, o, 1, 1, 0, m); // x1[i] := x1[i] - o[0], (where i is 0 .. m)
-		pointcloud_covariance (x1, m, c, 1.0f);
-		pointcloud_eigen (c, e, w);
-		//https://stackoverflow.com/questions/2782647/how-to-get-yaw-pitch-and-roll-from-a-3d-vector
-		fod->pca.elevation = atan2(e[0].x, e[0].z);
-		fod->pca.roll = asin(-e[0].y);
-		*/
-	}
-	// End PCA calculation
-
 
 
 
@@ -113,27 +81,33 @@ static uint32_t detection_sample
 	// w[0] = Shortest length m^2, w[1] = Medium length m^2, w[2] = Farthest length m^2.
 	// Note that the ground box dimensions is expressed as eigen values (w[0], w[1], w[2]) which is in square meter (m^2).
 	// To get the actual thickness of the box do sqrtf(w[0]).
-	if (DETECT_MIN_GROUND_THICKNESS_RATIO2*fod->pca.w[0] > fod->pca.w[1])
+	// w[1] must be k times larger than w[0] to pass this test:
+	if (DETECT_MIN_GROUND_THICKNESS_RATIO2*fod->pca_sample.w[0] > fod->pca_sample.w[1])
 	{
+		//printf ("DECTECT_FAILED DETECT_MIN_GROUND_THICKNESS_RATIO2\n");
 		return DECTECT_FAILED;
 	}
 
-	fod->avg_roll = f32_lerp2(fod->avg_roll, fod->pca.roll, 0.5f);
-	fod->avg_elevation = f32_lerp2(fod->avg_elevation, fod->pca.elevation, 0.5f);
+	{
+		// Calculate moving average of ground slope:
+		fod->avg_roll = f32_lerp2 (fod->avg_roll, fod->pca_sample.roll, 0.5f);
+		fod->avg_elevation = f32_lerp2 (fod->avg_elevation, fod->pca_sample.elevation, 0.5f);
 
-	// Flip eigen vectors if neccecery:
-	pointcloud_conditional_basis_flip (fod->pca.e);
+	}
 
 	{
-		// Rectify pointcloud:
-		// Rotate the pointcloud using rotation matrix:
-		v3f32 x2[CE30_WH];
-		v3f32_subv (x2, x, &(fod->pca.o), 1, 1, 0, CE30_WH);
-		pointcloud_rotate ((m3f32 *)fod->pca.e, x2, x1, CE30_WH); // (x1) := e (x2)
+		// Rectify pointcloud (x1):
+		// Rotate the pointcloud using rotation matrix triple eigen column vectors:
+		v3f32       * xt = fod->pc_xtemp; // Temporary pointcloud
+		v3f32       *  e = fod->pca_sample.e; // rotation matrix, triple eigen column vectors
+		v3f32 const *  o = &fod->pca_sample.o; // PCA centroid, offset from origin
+		pointcloud_conditional_basis_flip (e); // Flip eigen vectors if neccecery:
+		v3f32_subv (xt, x1, o, 1, 1, 0, CE30_WH);
+		pointcloud_rotate ((m3f32 *)e, xt, x2, CE30_WH);
 	}
 
 
-	//Reliably detect points above the ground box:
+	// Reliably detect points above the ground box:
 	{
 		// Label points within a pointcloud sector (0, a, b)
 		//     POINTCLOUD SECTOR
@@ -150,15 +124,15 @@ static uint32_t detection_sample
 		uint32_t j = 0; // Number of points above the ground
 		for (int32_t i = a; i < b; ++i)
 		{
-			if ((cid[i] & CE30_POINT_GOOD) == 0) {continue;}
-			cid[i] |= CE30_POINT_SECTOR;
-			float x = x1[i].x;
+			if ((tags1[i] & CE30_POINT_GOOD) == 0) {continue;}
+			tags1[i] |= CE30_POINT_SECTOR;
+			float x = x2[i].x;
 			if (x < 0) {continue;} // Ignore points under the ground
 			// Check if point higher than the noise i.e. eigen value:
-			if ((x*x) < (fod->pca.w[0]*DETECT_MIN_EIGEN_RATIO2)) {continue;}
+			if ((x*x) < (fod->pca_sample.w[0]*DETECT_MIN_EIGEN_RATIO2)) {continue;}
 			iobj[j] = i; // Store point index (i) that is above the ground:
 			j++;
-			cid[i] |= CE30_POINT_ABOVE;
+			tags1[i] |= CE30_POINT_ABOVE;
 		}
 
 
@@ -169,18 +143,19 @@ static uint32_t detection_sample
 		{
 			// Simple cluster selection.
 			// Randomly selected point is garanteed to belong to only one cluster:
-			fod->clusteri = iobj[rand() % j];
+			fod->pc_index_cluster = iobj[rand() % j];
 
 			{
 				v3f32 xcluster[CE30_WH];
-				uint32_t k = select_pca_points (x, CE30_WH, (x + fod->clusteri), xcluster, 0.1f);
+				uint32_t k = select_pca_points (x1, CE30_WH, (x1 + fod->pc_index_cluster), xcluster, 0.2f);
 				if (k > 10)
 				{
-					calculate_pca (&(fod->pca1), xcluster, k, 1.0f);
-					int criteria1 = 0 == (DETECT_MIN_GROUND_THICKNESS_RATIO2*fod->pca1.w[0] > fod->pca1.w[1]);
-					int criteria2 = fabs (fod->avg_elevation - fod->pca1.elevation) < 10.0f;
-					int criteria3 = fabs (fod->avg_roll - fod->pca1.roll) < 10.0f;
-					//printf ("DETECT: (%f*%f) < %f, roll=%f, elevation=%f\n", DETECT_MIN_GROUND_THICKNESS_RATIO2, fod->pca1.w[0], fod->pca1.w[1], f32_rad_to_deg(fod->pca1.roll), f32_rad_to_deg(fod->pca1.elevation));
+					calculate_pca (&(fod->pca_cluster), xcluster, k, 1.0f);
+					// w[0] must be k times smaller than w[0] to pass this test:
+					int criteria1 = DETECT_MIN_GROUND_THICKNESS_RATIO2*fod->pca_cluster.w[0] < fod->pca_cluster.w[1];
+					int criteria2 = fabs (fod->avg_elevation - fod->pca_cluster.elevation) < 10.0f;
+					int criteria3 = fabs (fod->avg_roll - fod->pca_cluster.roll) < 10.0f;
+					printf ("DETECT(%i,%i,%i): (%f*%f) < %f, roll=%f, elevation=%f\n", criteria1, criteria2, criteria3, DETECT_MIN_GROUND_THICKNESS_RATIO2, fod->pca_cluster.w[0], fod->pca_cluster.w[1], f32_rad_to_deg(fod->pca_cluster.roll), f32_rad_to_deg(fod->pca_cluster.elevation));
 					if (criteria1 && criteria2 && criteria3)
 					{
 						//printf ("DECTECT_FAILED: (%f*%f) < %f, roll=%f, elevation=%f\n", DETECT_MIN_GROUND_THICKNESS_RATIO2, fod->pca1.w[0], fod->pca1.w[1], f32_rad_to_deg(fod->pca1.roll), f32_rad_to_deg(fod->pca1.elevation));
@@ -192,12 +167,12 @@ static uint32_t detection_sample
 			}
 
 
-			ASSERT (fod->clusteri < (int32_t)CE30_WH);
-			ASSERT (fod->clusteri >= a);
-			ASSERT (fod->clusteri <= b);
-			if (cid[fod->clusteri] & CE30_POINT_GOOD)
+			ASSERT (fod->pc_index_cluster < (int32_t)CE30_WH);
+			ASSERT (fod->pc_index_cluster >= a);
+			ASSERT (fod->pc_index_cluster <= b);
+			if (tags1[fod->pc_index_cluster] & CE30_POINT_GOOD)
 			{
-				poitracker_update (trackers, (x + fod->clusteri), sample_index);
+				poitracker_update (trackers, (x1 + fod->pc_index_cluster), sample_index);
 			}
 		}
 
@@ -231,15 +206,17 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 
 #ifdef ENABLE_GRAPHIC
 		//graphics_draw_pointcloud_alpha (g, n, x1, amp);
-		graphics_draw_pca (g, fod->pca.e, fod->pca.w, &(fod->pca.o));
+		graphics_draw_pca (g, fod->pca_sample.e, fod->pca_sample.w, &(fod->pca_sample.o));
 		//csc_v3f32_print_rgb(e);
 		printf ("roll      %f\n", f32_rad_to_deg(fod->avg_roll));
 		printf ("elevation %f\n", f32_rad_to_deg(fod->avg_elevation));
+		printf ("w %f %f %f\n", fod->pca_sample.w[0], fod->pca_sample.w[1], fod->pca_sample.w[2]);
+		printf ("w %f %f %f\n", fod->pca_cluster.w[0], fod->pca_cluster.w[1], fod->pca_cluster.w[2]);
 
-		//graphics_draw_pca (g, fod->pca1.e, fod->pca1.w, &(fod->pca1.o));
+		graphics_draw_pca (g, fod->pca_cluster.e, fod->pca_cluster.w, &(fod->pca_cluster.o));
 		//graphics_draw_obj (g, x + fod->clusteri, 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
 		graphics_draw_obj (g, x + randomi, 0.05f, (u8rgba){{0x99, 0x33, 0xFF, 0xAA}});
-		graphics_draw_pointcloud_cid (g, CE30_WH, x, fod->pc_flags);
+		graphics_draw_pointcloud_cid (g, CE30_WH, x, fod->pc_tags);
 #endif
 	}
 

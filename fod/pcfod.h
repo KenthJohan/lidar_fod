@@ -15,19 +15,28 @@
 
 struct fodcontext
 {
+	// Pointclouds LiDAR source:
 	v4f32 pc_src[CE30_WH];
-	v3f32 pc_x0[CE30_WH];
+
+	// Pointclouds LiDAR source using only position xyz:
 	v3f32 pc_x1[CE30_WH];
-	v3f32 pc_xd[CE30_WH];
+	v3f32 pc_x2[CE30_WH];
+	v3f32 pc_xtemp[CE30_WH];
+
+	// Pointclouds LiDAR source only amplitude:
 	float pc_amplitude1[CE30_WH];
-	uint8_t pc_flags[CE30_WH];
-	float pc_alpha[CE30_WH];
 
-	struct fodpca pca_all;
-	struct fodpca pca;
-	struct fodpca pca1;
+	// Pointclouds per point flags:
+	uint8_t pc_tags[CE30_WH];
 
-	int32_t clusteri;
+	// Orientation of the ground:
+	struct fodpca pca_sample;
+
+	// Orientation of points whithin and around cluster the selected index:
+	struct fodpca pca_cluster;
+
+	// Selected cluster index:
+	int32_t pc_index_cluster;
 
 	float avg_roll;
 	float avg_elevation;
@@ -36,13 +45,13 @@ struct fodcontext
 
 static void fodcontext_read (struct fodcontext * fod, FILE * f)
 {
-	ASSERT_PARAM_NOTNULL(fod);
-	ASSERT_PARAM_NOTNULL(f);
+	ASSERT_PARAM_NOTNULL (fod);
+	ASSERT_PARAM_NOTNULL (f);
 	// Read 5 frames from CE30 LiDAR because it updates pointcloud per 5 frame.
 	ce30_read (f, fod->pc_src, 5);
-	memset (fod->pc_flags, 0, sizeof(uint8_t)*CE30_WH);
-	ce30_xyzw_to_pos_amp_flags (fod->pc_src, fod->pc_x1, fod->pc_amplitude1, fod->pc_flags);
-	ce30_detect_incidence_edges (fod->pc_flags);
+	memset (fod->pc_tags, 0, sizeof(uint8_t)*CE30_WH);
+	ce30_xyzw_to_pos_amp_flags (fod->pc_src, fod->pc_x1, fod->pc_amplitude1, fod->pc_tags);
+	ce30_detect_incidence_edges (fod->pc_tags);
 }
 
 
