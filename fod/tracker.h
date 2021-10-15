@@ -58,7 +58,7 @@ static uint32_t poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t co
 
 		r[i] = FLT_MAX;
 		y[i] = (v3f32){{0.0f, 0.0f, 0.0f}};
-		XLOG (XLOG_INF, XLOG_GENERAL, "Merging object tracker %i %i", i, j);
+		//XLOG (XLOG_INF, XLOG_GENERAL, "Merging object tracker %i %i", i, j);
 	}
 
 	return i;
@@ -98,7 +98,7 @@ static void poitracker_update (struct poitracker * tracker, v3f32 const * x, int
 	if (i < TRACKER_CAPACITY)
 	{
 		tracker->i[i] = randomi;
-		XLOG (XLOG_INF, XLOG_GENERAL, "tracker %i got updated\n", i);
+		//XLOG (XLOG_INF, XLOG_GENERAL, "tracker %i got updated\n", i);
 	}
 }
 

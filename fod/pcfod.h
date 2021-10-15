@@ -10,15 +10,7 @@
 #include "misc.h"
 #include "../shared/ce30.h"
 
-struct fodpca
-{
-	v3f32 o;
-	m3f32 c;
-	v3f32 e[3];
-	float w[3];
-	float elevation;
-	float roll;
-};
+
 
 
 struct fodcontext
@@ -31,9 +23,14 @@ struct fodcontext
 	uint8_t pc_flags[CE30_WH];
 	float pc_alpha[CE30_WH];
 
+	struct fodpca pca_all;
 	struct fodpca pca;
+	struct fodpca pca1;
 
 	int32_t clusteri;
+
+	float avg_roll;
+	float avg_elevation;
 };
 
 
@@ -47,3 +44,6 @@ static void fodcontext_read (struct fodcontext * fod, FILE * f)
 	ce30_xyzw_to_pos_amp_flags (fod->pc_src, fod->pc_x1, fod->pc_amplitude1, fod->pc_flags);
 	ce30_detect_incidence_edges (fod->pc_flags);
 }
+
+
+

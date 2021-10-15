@@ -20,7 +20,6 @@ SOURCES += fod.c
 
 HEADERS += myent.h
 HEADERS += misc.h
-HEADERS += pointcloud.h
 HEADERS += detection.h
 HEADERS += tracker.h
 HEADERS += graphics.h
