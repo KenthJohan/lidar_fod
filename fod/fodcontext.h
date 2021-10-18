@@ -1,14 +1,10 @@
 #pragma once
-#include "csc/csc_xlog.h"
-#include "csc/csc_crossos.h"
-#include "csc/csc_malloc_file.h"
-#include "csc/csc_filecopy.h"
-#include "csc/csc_argv.h"
-#include "csc/csc_assert.h"
-#include "csc/csc_xlog.h"
+
 #include "csc/csc_math.h"
-#include "misc.h"
+
 #include "../shared/ce30.h"
+
+#include "misc.h"
 #include "tracker.h"
 
 

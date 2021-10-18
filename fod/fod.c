@@ -23,7 +23,25 @@
 #include "misc.h"
 #include "detection.h"
 #include "fodcontext.h"
-#include "mainarg.h"
+
+
+
+#define ARG_HELP             UINT32_C(0x00000001)
+#define ARG_VERBOSE          UINT32_C(0x00000002)
+#define ARG_STDIN            UINT32_C(0x00000010)
+#define ARG_LEGACY_FILENAME  UINT32_C(0x00000100)
+#define ARG_CTRLMODE         UINT32_C(0x00001000)
+
+struct
+{
+	char const * address; //Grahpic remote address
+	char const * filename; //Load filename
+	uint32_t flags; //Misc flags
+	uint32_t usleep; //Microseconds sleep each frame
+	uint32_t frame; //Start from this frame when loading a file.
+} mainarg;
+
+
 
 
 static void fodcontext_read (struct fodcontext * fod, FILE * f)
@@ -38,12 +56,12 @@ static void fodcontext_read (struct fodcontext * fod, FILE * f)
 }
 
 
-void loop_stdin (struct poitracker * pc, struct fodcontext * fod, FILE * f)
+void loop_stdin (struct fodcontext * fod, FILE * f)
 {
 	while (1)
 	{
 		fodcontext_read (fod, f);
-		detection_input (pc, fod);
+		detection_input (fod);
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
 }
@@ -51,14 +69,14 @@ void loop_stdin (struct poitracker * pc, struct fodcontext * fod, FILE * f)
 
 
 
-void loop_file (struct poitracker * pc, struct fodcontext * fod, FILE * f)
+void loop_file (struct fodcontext * fod, FILE * f)
 {
 	int c = '\n';
 	while (1)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
 		fodcontext_read (fod, f);
-		detection_input (pc, fod);
+		detection_input (fod);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 		if (c == 'q'){return;}
@@ -67,7 +85,12 @@ void loop_file (struct poitracker * pc, struct fodcontext * fod, FILE * f)
 
 
 
-
+struct fodcontext * fodcontext_create()
+{
+	struct fodcontext * fodctx = calloc (1, sizeof (struct fodcontext));
+	poitracker_init (&fodctx->tracker);
+	return fodctx;
+}
 
 
 
@@ -109,10 +132,7 @@ int main (int argc, char const * argv[])
 
 	probe_init (mainarg.address);
 
-	struct poitracker tracker;
-	poitracker_init (&tracker);
-
-	struct fodcontext * fodctx = calloc(1, sizeof (struct fodcontext));
+	struct fodcontext * fodctx = fodcontext_create();
 
 	FILE * f = NULL;
 	if (mainarg.filename)
@@ -136,12 +156,12 @@ int main (int argc, char const * argv[])
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from STDIN");
 		//printf ("[INFO] Reading from STDIN\n");
-		loop_stdin (&tracker, fodctx, f);
+		loop_stdin (fodctx, f);
 	}
 	else if (f != NULL)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from file %s", mainarg.filename);
-		loop_file (&tracker, fodctx, f);
+		loop_file (fodctx, f);
 	}
 	else
 	{

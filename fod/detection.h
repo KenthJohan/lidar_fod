@@ -24,7 +24,7 @@
 #define DECTECT_SUCCESS 1
 
 static uint32_t detection_sample
-(struct poitracker * trackers, int32_t sample_index, struct fodcontext * fod)
+(int32_t sample_index, struct fodcontext * fod)
 {
 	uint8_t     * tags1 = fod->pc_tags;
 	v3f32 const *    x1 = fod->pc_x1;
@@ -162,7 +162,7 @@ static uint32_t detection_sample
 			ASSERT (fod->pc_index_cluster <= b);
 			if (tags1[fod->pc_index_cluster] & CE30_POINT_GOOD)
 			{
-				poitracker_update (trackers, (x1 + fod->pc_index_cluster), sample_index);
+				poitracker_update (&fod->tracker, (x1 + fod->pc_index_cluster), sample_index);
 			}
 		}
 
@@ -176,9 +176,8 @@ static uint32_t detection_sample
 
 
 
-static void detection_input (struct poitracker * tracker, struct fodcontext * fod)
+static void detection_input (struct fodcontext * fod)
 {
-	ASSERT_PARAM_NOTNULL (tracker);
 	ASSERT_PARAM_NOTNULL (fod);
 	v3f32 * x = fod->pc_x1;
 
@@ -191,7 +190,7 @@ static void detection_input (struct poitracker * tracker, struct fodcontext * fo
 			//memset (fod->pc_flags, 0, sizeof(uint8_t)*CE30_WH);
 		}
 		randomi = rand() % CE30_WH;
-		detection_sample (tracker, randomi, fod);
+		detection_sample (randomi, fod);
 		probe_fodcontext (fod, x, randomi);
 	}
 
@@ -199,21 +198,21 @@ static void detection_input (struct poitracker * tracker, struct fodcontext * fo
 
 	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 	{
-		if (tracker->h[i] > TRACKER_MIN_HITS_RESCAN)
+		if (fod->tracker.h[i] > TRACKER_MIN_HITS_RESCAN)
 		{
 			//getchar();
 			//printf ("Recheck tracker %i\n", i);
-			int32_t randomi = tracker->i[i];
+			int32_t randomi = fod->tracker.i[i];
 			int32_t spread = (rand() % (TRACKER_RESCAN_RADIUS*2)) - TRACKER_RESCAN_RADIUS;
 			randomi = CLAMP(randomi + spread, 0, CE30_WH);
-			detection_sample (tracker, randomi, fod);
+			detection_sample (randomi, fod);
 			//graphics_flush (g);
 		}
 	}
 
 
-	tracker_update2 (tracker);
-	probe_tracker (tracker, x);
+	tracker_update2 (&fod->tracker);
+	probe_tracker (&fod->tracker, x);
 }
 
 
