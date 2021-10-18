@@ -1,8 +1,10 @@
-gcc fod.c -ofod.exe \
+gcc -ofod.exe fod.c probe/probe.c \
+-DPROBE_IMPLEMENTED \
 -Wall \
 -Wno-unused-function \
 -D__USE_MINGW_ANSI_STDIO=1 \
 -DNNG_STATIC_LIB \
+-I. \
 -IC:/msys64/mingw64/include \
 -I../shared/csc \
 -LC:/msys64/mingw64/lib \

@@ -18,7 +18,7 @@
 #include "misc.h"
 #include "tracker.h"
 #include "pcfod.h"
-#include "probe.h"
+#include "probe/probe.h"
 
 #define DECTECT_FAILED 0
 #define DECTECT_SUCCESS 1

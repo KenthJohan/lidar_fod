@@ -12,15 +12,12 @@
 #include "csc/csc_rgb.h"
 
 #include "../shared/ce30.h"
-
-#include "misc.h"
-
 #include "../shared/mg_attr.h"
 #include "../shared/mg_comp.h"
 #include "../shared/mg_send.h"
-#include "myent.h"
 
-#include "pointcloud.h"
+#include "misc.h"
+#include "myent.h"
 #include "pcfod.h"
 
 

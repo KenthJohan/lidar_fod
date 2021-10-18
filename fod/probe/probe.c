@@ -1,5 +1,6 @@
 #include "probe.h"
 #include "graphics.h"
+#include "csc/csc_f32.h"
 
 static struct graphics probe_graphics;
 

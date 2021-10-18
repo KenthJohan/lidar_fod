@@ -1,4 +1,5 @@
-gcc fod.c -ofod \
+gcc -ofod fod.c probe/probe.c \
+-DPROBE_IMPLEMENTED \
 -I. \
 -DNNG_STATIC_LIB \
 -lnng \
