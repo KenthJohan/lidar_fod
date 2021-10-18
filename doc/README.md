@@ -9,8 +9,10 @@
 
 ## Sampling issue
 A false estimation of the ground can happen when sampling is done between ground points and object points.
+This can be prevented by checking the green points if they are flat then its ground and not a potential object.
 
 ![sample_problem](sample_problem.png)
+![sample_problem](sample_problem2.png)
 ![sample_problem](sample_problem1.png)
 
 
