@@ -9,6 +9,7 @@
 #include "csc/csc_math.h"
 #include "misc.h"
 #include "../shared/ce30.h"
+#include "tracker.h"
 
 
 
@@ -40,19 +41,7 @@ struct fodcontext
 
 	float avg_roll;
 	float avg_elevation;
+
+	struct poitracker tracker;
 };
-
-
-static void fodcontext_read (struct fodcontext * fod, FILE * f)
-{
-	ASSERT_PARAM_NOTNULL (fod);
-	ASSERT_PARAM_NOTNULL (f);
-	// Read 5 frames from CE30 LiDAR because it updates pointcloud per 5 frame.
-	ce30_read (f, fod->pc_src, 5);
-	memset (fod->pc_tags, 0, sizeof(uint8_t)*CE30_WH);
-	ce30_xyzw_to_pos_amp_flags (fod->pc_src, fod->pc_x1, fod->pc_amplitude1, fod->pc_tags);
-	ce30_detect_incidence_edges (fod->pc_tags);
-}
-
-
 

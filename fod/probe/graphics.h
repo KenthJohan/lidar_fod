@@ -18,7 +18,7 @@
 
 #include "misc.h"
 #include "myent.h"
-#include "pcfod.h"
+#include "fodcontext.h"
 
 
 #define GRAPHICVERTS_MAXITEMS 100000

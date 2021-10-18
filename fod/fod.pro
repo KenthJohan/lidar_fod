@@ -11,12 +11,13 @@ DEFINES += USING_QT_CREATOR
 # -f "../ce30_clouds/ce30_pointcloud.out" -c
 
 DEFINES += NNG_STATIC_LIB
+DEFINES += PROBE_IMPLEMENTED
 
 QMAKE_CFLAGS += -Wno-unused-function
 QMAKE_CFLAGS += -Wno-unused-parameter
 
 SOURCES += fod.c
-#SOURCES += probe/probe.c
+SOURCES += probe/probe.c
 
 
 HEADERS += myent.h
@@ -24,7 +25,8 @@ HEADERS += misc.h
 HEADERS += detection.h
 HEADERS += tracker.h
 HEADERS += graphics.h
-HEADERS += pcfod.h
+HEADERS += \
+	fodcontext.h
 HEADERS += ../shared/mg_comp.h
 HEADERS += ../shared/mg_attr.h
 HEADERS += ../shared/mg_send.h

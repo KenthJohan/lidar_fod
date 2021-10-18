@@ -13,15 +13,29 @@
 #include "csc/csc_argv.h"
 #include "csc/csc_assert.h"
 #include "csc/csc_xlog.h"
+#include "csc/csc_crossos.h"
+#include "csc/csc_malloc_file.h"
+#include "csc/csc_filecopy.h"
+#include "csc/csc_math.h"
 
 #include "../shared/ce30.h"
 
+#include "misc.h"
 #include "detection.h"
-#include "pcfod.h"
+#include "fodcontext.h"
 #include "mainarg.h"
 
 
-
+static void fodcontext_read (struct fodcontext * fod, FILE * f)
+{
+	ASSERT_PARAM_NOTNULL (fod);
+	ASSERT_PARAM_NOTNULL (f);
+	memset (fod->pc_tags, 0, sizeof(uint8_t)*CE30_WH);
+	// Read 5 frames from CE30 LiDAR because it updates pointcloud per 5 frame.
+	ce30_read (f, fod->pc_src, 5);
+	ce30_xyzw_to_pos_amp_flags (fod->pc_src, fod->pc_x1, fod->pc_amplitude1, fod->pc_tags);
+	ce30_detect_incidence_edges (fod->pc_tags);
+}
 
 
 void loop_stdin (struct poitracker * pc, struct fodcontext * fod, FILE * f)
