@@ -267,31 +267,3 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 
 
 
-
-
-
-
-
-
-
-
-
-/*
-void ball_process(v3f32 const * x, uint32_t n)
-{
-	m3f32 c;
-	v3f32 y[CE30_WH];
-	v3f32 y1[CE30_WH];
-	v3f32 e[3];
-	float w[3];
-	v3f32 o;
-	uint32_t m = sampleball(x, n, y, 0.2f); //0.2m radius ball
-	pointcloud_centering (y, y, m, 1.0f, &o);
-	pointcloud_covariance (y, m, &c, 1.0f);
-	pointcloud_eigen (&c, e, w);
-	pointcloud_conditional_basis_flip (e);
-	pointcloud_reorder_eigen (e, w);
-	memcpy (y1, y, sizeof (v3f32) * CE30_WH);
-	pointcloud_rotate ((m3f32 *)e, y1, y, m);
-}
-*/
