@@ -183,7 +183,7 @@ static void graphics_init (nng_socket sock)
 */
 
 
-u8rgba graphics_cid (uint8_t tag)
+static u8rgba graphics_cid (uint8_t tag)
 {
 
 	if (tag & CE30_POINT_ABOVE)

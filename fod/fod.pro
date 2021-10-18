@@ -16,6 +16,7 @@ QMAKE_CFLAGS += -Wno-unused-function
 QMAKE_CFLAGS += -Wno-unused-parameter
 
 SOURCES += fod.c
+SOURCES += probe.c
 
 
 HEADERS += myent.h

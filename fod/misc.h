@@ -194,7 +194,7 @@ struct fodpca
 
 
 
-uint32_t select_pca_points (v3f32 const x[], uint32_t n, v3f32 const * c, v3f32 y[], float r)
+static uint32_t select_pca_points (v3f32 const x[], uint32_t n, v3f32 const * c, v3f32 y[], float r)
 {
 	uint32_t m = 0;
 	for(uint32_t i = 0; i < n; ++i)
@@ -221,7 +221,7 @@ uint32_t select_pca_points (v3f32 const x[], uint32_t n, v3f32 const * c, v3f32 
 // c : 3x3 coveriance matrix of subcloud (x1). Contains orientation and variance.
 // e : Three eigen column vectors (Shortest, Medium, Farthest) of coveriance matrix (c). Contains only orientation.
 // w : Three eigen values (Shortest, Medium, Farthest) of coveriance matrix (c). Contains variance.
-void calculate_pca (struct fodpca * pca, v3f32 * x1, uint32_t m, float k)
+static void calculate_pca (struct fodpca * pca, v3f32 * x1, uint32_t m, float k)
 {
 	v3f32 * o = &(pca->o);
 	m3f32 * c = &(pca->c);

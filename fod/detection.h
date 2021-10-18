@@ -16,22 +16,12 @@
 #include "../shared/ce30.h"
 
 #include "misc.h"
-#include "graphics.h"
 #include "tracker.h"
 #include "pcfod.h"
-
+#include "probe.h"
 
 #define DECTECT_FAILED 0
 #define DECTECT_SUCCESS 1
-
-
-
-
-
-
-
-
-
 
 static uint32_t detection_sample
 (struct poitracker * trackers, int32_t sample_index, struct fodcontext * fod)
@@ -186,9 +176,8 @@ static uint32_t detection_sample
 
 
 
-static void detection_input (struct graphics * g, struct poitracker * tracker, struct fodcontext * fod)
+static void detection_input (struct poitracker * tracker, struct fodcontext * fod)
 {
-	ASSERT_PARAM_NOTNULL (g);
 	ASSERT_PARAM_NOTNULL (tracker);
 	ASSERT_PARAM_NOTNULL (fod);
 	v3f32 * x = fod->pc_x1;
@@ -203,21 +192,7 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 		}
 		randomi = rand() % CE30_WH;
 		detection_sample (tracker, randomi, fod);
-
-#ifdef ENABLE_GRAPHIC
-		//graphics_draw_pointcloud_alpha (g, n, x1, amp);
-		graphics_draw_pca (g, fod->pca_sample.e, fod->pca_sample.w, &(fod->pca_sample.o));
-		//csc_v3f32_print_rgb(e);
-		printf ("roll      %f\n", f32_rad_to_deg(fod->avg_roll));
-		printf ("elevation %f\n", f32_rad_to_deg(fod->avg_elevation));
-		printf ("w %f %f %f\n", fod->pca_sample.w[0], fod->pca_sample.w[1], fod->pca_sample.w[2]);
-		printf ("w %f %f %f\n", fod->pca_cluster.w[0], fod->pca_cluster.w[1], fod->pca_cluster.w[2]);
-
-		graphics_draw_pca (g, fod->pca_cluster.e, fod->pca_cluster.w, &(fod->pca_cluster.o));
-		//graphics_draw_obj (g, x + fod->clusteri, 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
-		graphics_draw_obj (g, x + randomi, 0.05f, (u8rgba){{0x99, 0x33, 0xFF, 0xAA}});
-		graphics_draw_pointcloud_cid (g, CE30_WH, x, fod->pc_tags);
-#endif
+		probe_fodcontext (fod, x, randomi);
 	}
 
 	// Smart sampling:
@@ -238,31 +213,7 @@ static void detection_input (struct graphics * g, struct poitracker * tracker, s
 
 
 	tracker_update2 (tracker);
-
-
-#ifdef ENABLE_GRAPHIC
-	if (g)
-	{
-		for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
-		{
-			char buf[10];
-			//snprintf(buf, 10, "%i:%4.2f", i, tracker->h[i]);
-			snprintf(buf, 10, "%i", i);
-			graphics_draw_obj (g, tracker->x + i, tracker->r[i], (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
-			//graphics_draw_text (g, i, tracker->x + i, buf);
-		}
-	}
-	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
-	{
-		if (tracker->r[i] != FLT_MAX)
-		{
-			graphics_draw_line (g, x + tracker->i[i], tracker->x + i, (u8rgba){{0x44, 0xAA, 0xAA, 0xFF}});
-			//graphics_draw_obj (g, x + tracker->i[i], tracker->r[i], (u8rgba){{0x00, 0x00, 0x66, 0xFF}});
-		}
-	}
-	graphics_flush (g);
-#endif
-
+	probe_tracker (tracker, x);
 }
 
 

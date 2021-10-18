@@ -15,10 +15,8 @@
 #include "csc/csc_xlog.h"
 
 #include "../shared/ce30.h"
-#include "../shared/mg_send.h"
 
 #include "detection.h"
-#include "graphics.h"
 #include "pcfod.h"
 #include "mainarg.h"
 
@@ -26,12 +24,12 @@
 
 
 
-void loop_stdin (struct poitracker * pc, struct fodcontext * fod, struct graphics * g, FILE * f)
+void loop_stdin (struct poitracker * pc, struct fodcontext * fod, FILE * f)
 {
 	while (1)
 	{
 		fodcontext_read (fod, f);
-		detection_input (g, pc, fod);
+		detection_input (pc, fod);
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
 }
@@ -39,14 +37,14 @@ void loop_stdin (struct poitracker * pc, struct fodcontext * fod, struct graphic
 
 
 
-void loop_file (struct poitracker * pc, struct fodcontext * fod, struct graphics * g, FILE * f)
+void loop_file (struct poitracker * pc, struct fodcontext * fod, FILE * f)
 {
 	int c = '\n';
 	while (1)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
 		fodcontext_read (fod, f);
-		detection_input (g, pc, fod);
+		detection_input (pc, fod);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 		if (c == 'q'){return;}
@@ -95,13 +93,7 @@ int main (int argc, char const * argv[])
 		return 0;
 	}
 
-
-
-
-	struct graphics g;
-	g.lines.count = 200;
-	g.points.count = CE30_WH*2;
-	graphics_init (&g, mainarg.address);
+	probe_init (mainarg.address);
 
 	struct poitracker tracker;
 	poitracker_init (&tracker);
@@ -130,18 +122,18 @@ int main (int argc, char const * argv[])
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from STDIN");
 		//printf ("[INFO] Reading from STDIN\n");
-		loop_stdin (&tracker, fodctx, &g, f);
+		loop_stdin (&tracker, fodctx, f);
 	}
 	else if (f != NULL)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from file %s", mainarg.filename);
-		loop_file (&tracker, fodctx, &g, f);
+		loop_file (&tracker, fodctx, f);
 	}
 	else
 	{
 		return -1;
 	}
 
-	nng_close (g.sock);
+	probe_quit();
 	return 0;
 }
