@@ -145,7 +145,7 @@ static uint32_t detection_sample
 					int criteria1 = DETECT_MIN_GROUND_THICKNESS_RATIO2*fod->pca_cluster.w[0] < fod->pca_cluster.w[1];
 					int criteria2 = fabs (fod->avg_elevation - fod->pca_cluster.elevation) < 10.0f;
 					int criteria3 = fabs (fod->avg_roll - fod->pca_cluster.roll) < 10.0f;
-					printf ("DETECT(%i,%i,%i): (%f*%f) < %f, roll=%f, elevation=%f\n", criteria1, criteria2, criteria3, DETECT_MIN_GROUND_THICKNESS_RATIO2, fod->pca_cluster.w[0], fod->pca_cluster.w[1], f32_rad_to_deg(fod->pca_cluster.roll), f32_rad_to_deg(fod->pca_cluster.elevation));
+					printf ("IsGround(%i,%i,%i): (%f*%f) < %f, roll=%f, elevation=%f\n", criteria1, criteria2, criteria3, DETECT_MIN_GROUND_THICKNESS_RATIO2, fod->pca_cluster.w[0], fod->pca_cluster.w[1], f32_rad_to_deg(fod->pca_cluster.roll), f32_rad_to_deg(fod->pca_cluster.elevation));
 					if (criteria1 && criteria2 && criteria3)
 					{
 						//printf ("DECTECT_FAILED: (%f*%f) < %f, roll=%f, elevation=%f\n", DETECT_MIN_GROUND_THICKNESS_RATIO2, fod->pca1.w[0], fod->pca1.w[1], f32_rad_to_deg(fod->pca1.roll), f32_rad_to_deg(fod->pca1.elevation));
@@ -195,7 +195,6 @@ static void detection_input (struct fodcontext * fod)
 	}
 
 	// Smart sampling:
-
 	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
 	{
 		if (fod->tracker.h[i] > TRACKER_MIN_HITS_RESCAN)
@@ -213,6 +212,7 @@ static void detection_input (struct fodcontext * fod)
 
 	tracker_update2 (&fod->tracker);
 	probe_tracker (&fod->tracker, x);
+	probe_flush ();
 }
 
 

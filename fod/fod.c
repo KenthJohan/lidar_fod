@@ -24,6 +24,9 @@
 #include "detection.h"
 #include "fodcontext.h"
 
+#include "probe/probe.h"
+#include "milo/milomqtt.h"
+
 
 
 #define ARG_HELP             UINT32_C(0x00000001)
@@ -39,6 +42,13 @@ struct
 	uint32_t flags; //Misc flags
 	uint32_t usleep; //Microseconds sleep each frame
 	uint32_t frame; //Start from this frame when loading a file.
+
+	// The hostname or ip address of the broker to connect to.
+	char const * mqtthost;
+	// The network port to connect to. Usually 1883.
+	int mqttport;
+	// The number of seconds after which the broker should send a PING message to the client if no other messages have been exchanged in that time.
+	int mqttkeepalive;
 } mainarg;
 
 
@@ -62,6 +72,7 @@ void loop_stdin (struct fodcontext * fod, FILE * f)
 	{
 		fodcontext_read (fod, f);
 		detection_input (fod);
+		milomqtt_send (fod);
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
 }
@@ -77,6 +88,7 @@ void loop_file (struct fodcontext * fod, FILE * f)
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
 		fodcontext_read (fod, f);
 		detection_input (fod);
+		milomqtt_send (fod);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 		if (c == 'q'){return;}
@@ -108,18 +120,26 @@ int main (int argc, char const * argv[])
 	mainarg.flags = 0;
 	mainarg.usleep = 0;
 	mainarg.frame = 0;
+	mainarg.mqttport = 1883;
+	mainarg.mqttkeepalive = 60;
+	mainarg.mqtthost = "192.168.1.195";//Logserver
 
 	struct csc_argv_option option[] =
 	{
-	{'h', "help",            CSC_TYPE_U32,    &mainarg.flags,      ARG_HELP,            "Show help"},
-	{'v', "verbose",         CSC_TYPE_U32,    &mainarg.flags,      ARG_VERBOSE,         "Show verbose"},
-	{'i', "input",           CSC_TYPE_U32,    &mainarg.flags,      ARG_STDIN,           "Get pointcloud from stdin"},
-	{'c', "ctrlmode",        CSC_TYPE_U32,    &mainarg.flags,      ARG_CTRLMODE,        "Step forward foreach keypress"},
-	{'a', "address",         CSC_TYPE_STRING, &mainarg.address,    0,                   "The MQTT address to send to"},
-	{'f', "filename",        CSC_TYPE_STRING, &mainarg.filename,   0,                   "Filename to f32 xyzw 320x20 file"},
-	{'F', "frame",           CSC_TYPE_U32,    &mainarg.frame,      0,                   "The starting frame"},
-	{'d', "duration",        CSC_TYPE_U32,    &mainarg.usleep,     0,                   "Duration for each frame"},
+	{'h', "help",            CSC_TYPE_U32,    &mainarg.flags,         ARG_HELP,            "Show help"},
+	{'v', "verbose",         CSC_TYPE_U32,    &mainarg.flags,         ARG_VERBOSE,         "Show verbose"},
+	{'i', "input",           CSC_TYPE_U32,    &mainarg.flags,         ARG_STDIN,           "Get pointcloud data from stdin"},
+	{'c', "ctrlmode",        CSC_TYPE_U32,    &mainarg.flags,         ARG_CTRLMODE,        "Step forward by pressing enter"},
+	{'a', "address",         CSC_TYPE_STRING, &mainarg.address,       0,                   "Algorithm probing server address"},
+	{'h', "mqtthost",        CSC_TYPE_STRING, &mainarg.mqtthost,      0,                   "MQTT: The hostname or ip address of the broker to connect to."},
+	{'p', "mqttport",        CSC_TYPE_STRING, &mainarg.mqttport,      0,                   "MQTT: The network port to connect to. Usually 1883."},
+	{'p', "mqttkeepalive",   CSC_TYPE_STRING, &mainarg.mqttkeepalive, 0,                   "MQTT: The number of seconds after which the broker should send a PING message to the client if no other messages have been exchanged in that time."},
+	{'f', "filename",        CSC_TYPE_STRING, &mainarg.filename,      0,                   "Filename to f32 xyzw 320x20 file"},
+	{'F', "frame",           CSC_TYPE_U32,    &mainarg.frame,         0,                   "The starting frame"},
+	{'d', "duration",        CSC_TYPE_U32,    &mainarg.usleep,        0,                   "Duration for each frame"},
 	{CSC_ARGV_END}};
+
+
 
 	csc_argv_parseall (argv+1, option);
 
@@ -130,7 +150,9 @@ int main (int argc, char const * argv[])
 		return 0;
 	}
 
+	// Either use probe or milomqtt:
 	probe_init (mainarg.address);
+	milomqtt_init (mainarg.mqtthost, mainarg.mqttport, mainarg.mqttkeepalive);
 
 	struct fodcontext * fodctx = fodcontext_create();
 

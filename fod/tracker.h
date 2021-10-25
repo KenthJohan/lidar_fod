@@ -89,6 +89,7 @@ static void poitracker_init (struct poitracker * tracker)
 	memset (tracker, 0, sizeof (struct poitracker));
 	vf32_set1 (TRACKER_CAPACITY, tracker->r, FLT_MAX);
 	vf32_set1 (TRACKER_CAPACITY, tracker->h, 0.0f);
+	tracker->count = TRACKER_CAPACITY;
 }
 
 

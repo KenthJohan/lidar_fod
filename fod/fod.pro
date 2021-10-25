@@ -2,12 +2,10 @@ TEMPLATE = app
 CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
-CONFIG += static
+#CONFIG += static
 
 DEFINES += USING_QT_CREATOR
 # -f "../ce30_clouds/ce30_pointcloud.out" -c
-
-
 # -f "../ce30_clouds/ce30_pointcloud.out" -c
 
 DEFINES += NNG_STATIC_LIB
@@ -53,15 +51,17 @@ INCLUDEPATH += C:/msys64/mingw64/include
 
 LIBS += -LC:/msys64/mingw64/lib
 
+LIBS += -lmosquitto
+
 LIBS += -Wl,-Bstatic
+#LIBS += -Wl,-Bdynamic
 LIBS += -lnng
 LIBS += -lws2_32 -lmswsock -ladvapi32 -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
-#LIBS += -Wl,-Bdynamic
-
 LIBS += -lopenblas
 #LIBS += -llapack
 #LIBS += -llapacke
 #LIBS += -lcblas
 #LIBS += -lblas
 LIBS += -lm
+
 
