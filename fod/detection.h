@@ -79,10 +79,13 @@ static uint32_t detection_sample
 	}
 
 	{
-		// Calculate moving average of ground slope:
-		fod->avg_roll = f32_lerp2 (fod->avg_roll, fod->pca_sample.roll, 0.5f);
-		fod->avg_elevation = f32_lerp2 (fod->avg_elevation, fod->pca_sample.elevation, 0.5f);
-
+		v3f32_normalize (&(fod->sample_normal));
+		float k = 0.1f;
+		v3f32_lerp2 (&(fod->sample_normal), &(fod->sample_normal), fod->pca_sample.e + 0, k);
+		fod->sample_delta = v3f32_dot (&(fod->sample_normal), fod->pca_sample.e + 0);
+		fod->sample_mean_variance = f32_lerp2 (fod->sample_mean_variance, fod->sample_delta, 0.5f);
+		fod->sample_mean_roll = ce30_roll (&(fod->sample_normal));
+		fod->sample_mean_elevation = ce30_elevation (&(fod->sample_normal));
 	}
 
 	{
@@ -143,9 +146,9 @@ static uint32_t detection_sample
 					calculate_pca (&(fod->pca_cluster), xcluster, k, 1.0f);
 					// w[0] must be k times smaller than w[0] to pass this test:
 					int criteria1 = DETECT_MIN_GROUND_THICKNESS_RATIO2*fod->pca_cluster.w[0] < fod->pca_cluster.w[1];
-					int criteria2 = fabs (fod->avg_elevation - fod->pca_cluster.elevation) < 10.0f;
-					int criteria3 = fabs (fod->avg_roll - fod->pca_cluster.roll) < 10.0f;
-					printf ("IsGround(%i,%i,%i): (%f*%f) < %f, roll=%f, elevation=%f\n", criteria1, criteria2, criteria3, DETECT_MIN_GROUND_THICKNESS_RATIO2, fod->pca_cluster.w[0], fod->pca_cluster.w[1], f32_rad_to_deg(fod->pca_cluster.roll), f32_rad_to_deg(fod->pca_cluster.elevation));
+					int criteria2 = fabs (fod->sample_mean_elevation - fod->pca_cluster.elevation) < 10.0f;
+					int criteria3 = fabs (fod->sample_mean_roll - fod->pca_cluster.roll) < 10.0f;
+					//printf ("IsGround(%i,%i,%i): (%f*%f) < %f, roll=%f, elevation=%f\n", criteria1, criteria2, criteria3, DETECT_MIN_GROUND_THICKNESS_RATIO2, fod->pca_cluster.w[0], fod->pca_cluster.w[1], f32_rad_to_deg(fod->pca_cluster.roll), f32_rad_to_deg(fod->pca_cluster.elevation));
 					if (criteria1 && criteria2 && criteria3)
 					{
 						//printf ("DECTECT_FAILED: (%f*%f) < %f, roll=%f, elevation=%f\n", DETECT_MIN_GROUND_THICKNESS_RATIO2, fod->pca1.w[0], fod->pca1.w[1], f32_rad_to_deg(fod->pca1.roll), f32_rad_to_deg(fod->pca1.elevation));
@@ -180,6 +183,8 @@ static void detection_input (struct fodcontext * fod)
 {
 	ASSERT_PARAM_NOTNULL (fod);
 	v3f32 * x = fod->pc_x1;
+	memset (&fod->pca_sample, 0, sizeof (struct fodpca));
+	memset (&fod->pca_cluster, 0, sizeof (struct fodpca));
 
 	{
 		int32_t randomi;
@@ -193,6 +198,7 @@ static void detection_input (struct fodcontext * fod)
 		detection_sample (randomi, fod);
 		probe_fodcontext (fod, x, randomi);
 	}
+
 
 	// Smart sampling:
 	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
@@ -208,6 +214,7 @@ static void detection_input (struct fodcontext * fod)
 			//graphics_flush (g);
 		}
 	}
+
 
 
 	tracker_update2 (&fod->tracker);

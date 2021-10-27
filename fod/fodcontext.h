@@ -35,8 +35,12 @@ struct fodcontext
 	// Selected cluster index:
 	int32_t pc_index_cluster;
 
-	float avg_roll;
-	float avg_elevation;
+
+	v3f32 sample_normal;
+	float sample_delta;
+	float sample_mean_variance;
+	float sample_mean_roll;
+	float sample_mean_elevation;
 
 	struct poitracker tracker;
 };

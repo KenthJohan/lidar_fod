@@ -100,6 +100,8 @@ void loop_file (struct fodcontext * fod, FILE * f)
 struct fodcontext * fodcontext_create()
 {
 	struct fodcontext * fodctx = calloc (1, sizeof (struct fodcontext));
+	fodctx->sample_mean_variance = 1.0f; //This is dotproduct result. 1.0 == 0 deg
+	fodctx->sample_normal = (v3f32){{0.0f, 0.0f, 1.0f}};
 	poitracker_init (&fodctx->tracker);
 	return fodctx;
 }

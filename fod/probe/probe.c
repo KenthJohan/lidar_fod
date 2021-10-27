@@ -17,10 +17,12 @@ void probe_fodcontext (struct fodcontext * fod, v3f32 x[CE30_WH], uint32_t rando
 	//graphics_draw_pointcloud_alpha (g, n, x1, amp);
 	graphics_draw_pca (&probe_graphics, fod->pca_sample.e, fod->pca_sample.w, &(fod->pca_sample.o));
 	//csc_v3f32_print_rgb(e);
-	printf ("roll      %f\n", f32_rad_to_deg(fod->avg_roll));
-	printf ("elevation %f\n", f32_rad_to_deg(fod->avg_elevation));
-	printf ("w %f %f %f\n", fod->pca_sample.w[0], fod->pca_sample.w[1], fod->pca_sample.w[2]);
-	printf ("w %f %f %f\n", fod->pca_cluster.w[0], fod->pca_cluster.w[1], fod->pca_cluster.w[2]);
+	printf ("sample_delta:         %+5.5f (%+5.2f deg)\n", fod->sample_delta, f32_rad_to_deg(acos(fod->sample_delta)));
+	printf ("sample_mean_variance: %+5.5f (%+5.2f deg)\n", fod->sample_mean_variance, f32_rad_to_deg(acos(fod->sample_mean_variance)));
+	printf ("sample_mean_roll      %+5.5f\n", f32_rad_to_deg(fod->sample_mean_roll));
+	printf ("sample_mean_elevation %+5.5f\n", f32_rad_to_deg(fod->sample_mean_elevation));
+	printf ("sample  eigenval:  %+5.5f %+5.5f %+5.5f\n", fod->pca_sample.w[0], fod->pca_sample.w[1], fod->pca_sample.w[2]);
+	printf ("cluster eigenval:  %+5.5f %+5.5f %+5.5f\n", fod->pca_cluster.w[0], fod->pca_cluster.w[1], fod->pca_cluster.w[2]);
 
 	graphics_draw_pca (&probe_graphics, fod->pca_cluster.e, fod->pca_cluster.w, &(fod->pca_cluster.o));
 	//graphics_draw_obj (g, x + fod->clusteri, 0.1f, (u8rgba){{0xCC, 0xEE, 0xFF, 0xFF}});
