@@ -26,11 +26,14 @@ struct fodcontext
 	// Pointclouds per point flags:
 	uint8_t pc_tags[CE30_WH];
 
-	// Orientation of the ground:
+	// Orientation of the sample:
 	struct fodpca pca_sample;
 
-	// Orientation of points whithin and around cluster the selected index:
+	// Orientation of the cluster:
 	struct fodpca pca_cluster;
+
+	//
+	struct fodpca pca_ground;
 
 	// Selected cluster index:
 	int32_t pc_index_cluster;

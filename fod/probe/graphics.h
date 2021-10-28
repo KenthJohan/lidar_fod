@@ -257,13 +257,12 @@ static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f
 
 
 
-static void graphics_draw_pca (struct graphics * g, v3f32 const e[3], float const w[3], v3f32 const * c)
+static void graphics_draw_pca (struct graphics * g, v3f32 const e[3], float const w[3], v3f32 const * c, float kx, float ky, float kz)
 {
 	uint32_t last = g->lines.last;
 	v4f32 * pos = g->lines.pos + last;
 	u8rgba * col = g->lines.col + last;
 	graphicverts_reserve (&g->lines, 12);
-	float l = 8.0f;
 	u8rgba col_x = {{0xFF, 0x55, 0x55, 0x99}};
 	u8rgba col_y = {{0x55, 0xFF, 0x55, 0x99}};
 	u8rgba col_z = {{0x55, 0x55, 0xFF, 0x99}};
@@ -271,9 +270,9 @@ static void graphics_draw_pca (struct graphics * g, v3f32 const e[3], float cons
 	v4f32_set_xyzw (pos + 0, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 2, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 4, c->x, c->y, c->z, 0.0f);
-	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*DETECT_MIN_EIGEN_RATIO);
-	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1])*l);
-	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2])*l);
+	v3f32_add_mul ((v3f32*)(pos + 1), c, e + 0, 1.0, sqrtf(w[0])*kx);
+	v3f32_add_mul ((v3f32*)(pos + 3), c, e + 1, 1.0, sqrtf(w[1])*ky);
+	v3f32_add_mul ((v3f32*)(pos + 5), c, e + 2, 1.0, sqrtf(w[2])*kz);
 	col[0] = col_x;
 	col[1] = col_x;
 	col[2] = col_y;
@@ -286,9 +285,9 @@ static void graphics_draw_pca (struct graphics * g, v3f32 const e[3], float cons
 	v4f32_set_xyzw (pos + 6, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 8, c->x, c->y, c->z, 0.0f);
 	v4f32_set_xyzw (pos + 10, c->x, c->y, c->z, 0.0f);
-	v3f32_add_mul ((v3f32*)(pos + 7), c, e + 0, 1.0, -sqrtf(w[0])*DETECT_MIN_EIGEN_RATIO);
-	v3f32_add_mul ((v3f32*)(pos + 9), c, e + 1, 1.0, -sqrtf(w[1])*l);
-	v3f32_add_mul ((v3f32*)(pos + 11), c, e + 2, 1.0, -sqrtf(w[2])*l);
+	v3f32_add_mul ((v3f32*)(pos + 7), c, e + 0, 1.0, -sqrtf(w[0])*kx);
+	v3f32_add_mul ((v3f32*)(pos + 9), c, e + 1, 1.0, -sqrtf(w[1])*ky);
+	v3f32_add_mul ((v3f32*)(pos + 11), c, e + 2, 1.0, -sqrtf(w[2])*kz);
 	col[6] = col_x;
 	col[7] = col_x;
 	col[8] = col_y;

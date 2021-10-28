@@ -114,3 +114,18 @@ static void ce30_xyzw_to_pos_amp_flags (v4f32 const x[CE30_WH], v3f32 y[CE30_WH]
 
 
 
+
+
+static float ce30_roll (v3f32 * v)
+{
+	return asin (-v->y);
+}
+
+static float ce30_elevation (v3f32 * v)
+{
+	return atan2 (v->x, v->z);
+}
+
+
+
+

@@ -26,25 +26,25 @@
 static uint32_t detection_sample
 (int32_t sample_index, struct fodcontext * fod)
 {
-	uint8_t     * tags1 = fod->pc_tags;
-	v3f32 const *    x1 = fod->pc_x1;
-	v3f32       *    x2 = fod->pc_x2;
-
-
-	if ((tags1[sample_index] & CE30_POINT_GOOD) == 0)
+	if ((fod->pc_tags[sample_index] & CE30_POINT_GOOD) == 0)
 	{
 		return DECTECT_FAILED;
 	}
 
 
 
+
+
 	{
-		v3f32 const * s = x1 + sample_index; // Select sample coordinate
+		uint8_t     * tags1 = fod->pc_tags;
+		v3f32 const *    x1 = fod->pc_x1; // Input pointcloud
+		v3f32       *    x2 = fod->pc_x2; // Temporary pointcloud
+		v3f32 const *     s = x1 + sample_index; // Select sample coordinate
 		// Copy (n) amount of points (x) at position (s) within sphere to (x1):
 		// Where (m) is number of point in ball:
 		// Returns Nnmber of point in ball:
 		uint32_t m = select_pca_points (x1, CE30_WH, s, x2, DETECT_BALL_RADIUS);
-		// Currently this is only good fod visualds:
+		// Currently this is only good for visuals:
 		for (uint32_t i = 0; i < CE30_WH; ++i)
 		{
 			v3f32 d;
@@ -63,9 +63,6 @@ static uint32_t detection_sample
 		calculate_pca (&fod->pca_sample, x2, m, 1.0f);
 	}
 
-
-
-
 	// Check if the ground box is thin enough to reliably detect points above the ground box:
 	// These are the ground box dimensions:
 	// w[0] = Shortest length m^2, w[1] = Medium length m^2, w[2] = Farthest length m^2.
@@ -78,6 +75,34 @@ static uint32_t detection_sample
 		return DECTECT_FAILED;
 	}
 
+	/*
+	{
+		//uint8_t     * tags1 = fod->pc_tags;
+		v3f32 const *    x1 = fod->pc_x1; // Input pointcloud
+		v3f32       *    x2 = fod->pc_x2; // Temporary pointcloud
+		v3f32 const *     s = x1 + sample_index; // Select sample coordinate
+		float r = DETECT_BALL_RADIUS;
+		for (int i = 0; i < 1; ++i)
+		{
+			r += 0.2f;
+			uint32_t m = select_pca_points (x1, CE30_WH, s, x2, r);
+			calculate_pca (&fod->pca_ground, x2, m, 1.0f);
+			{
+				// Rectify pointcloud (x1):
+				// Rotate the pointcloud using rotation matrix triple eigen column vectors:
+				v3f32       * xt = fod->pc_xtemp; // Temporary pointcloud
+				v3f32       *  e = fod->pca_ground.e; // rotation matrix, triple eigen column vectors
+				v3f32 const *  o = &fod->pca_ground.o; // PCA centroid, offset from origin
+				pointcloud_conditional_basis_flip (e); // Flip eigen vectors if neccecery:
+				v3f32_subv (xt, x1, o, 1, 1, 0, CE30_WH);
+				pointcloud_rotate ((m3f32 *)e, xt, x2, CE30_WH);
+			}
+		}
+	}
+	*/
+
+
+
 	{
 		v3f32_normalize (&(fod->sample_normal));
 		float k = 0.1f;
@@ -88,20 +113,24 @@ static uint32_t detection_sample
 		fod->sample_mean_elevation = ce30_elevation (&(fod->sample_normal));
 	}
 
-	{
-		// Rectify pointcloud (x1):
-		// Rotate the pointcloud using rotation matrix triple eigen column vectors:
-		v3f32       * xt = fod->pc_xtemp; // Temporary pointcloud
-		v3f32       *  e = fod->pca_sample.e; // rotation matrix, triple eigen column vectors
-		v3f32 const *  o = &fod->pca_sample.o; // PCA centroid, offset from origin
-		pointcloud_conditional_basis_flip (e); // Flip eigen vectors if neccecery:
-		v3f32_subv (xt, x1, o, 1, 1, 0, CE30_WH);
-		pointcloud_rotate ((m3f32 *)e, xt, x2, CE30_WH);
-	}
+
 
 
 	// Reliably detect points above the ground box:
 	{
+		v3f32 const *    x1 = fod->pc_x1;
+		v3f32       *    x2 = fod->pc_x2;
+		uint8_t     * tags1 = fod->pc_tags;
+		{
+			// Rectify pointcloud (x1):
+			// Rotate the pointcloud using rotation matrix triple eigen column vectors:
+			v3f32       * xt = fod->pc_xtemp; // Temporary pointcloud
+			v3f32       *  e = fod->pca_sample.e; // rotation matrix, triple eigen column vectors
+			v3f32 const *  o = &fod->pca_sample.o; // PCA centroid, offset from origin
+			pointcloud_conditional_basis_flip (e); // Flip eigen vectors if neccecery:
+			v3f32_subv (xt, x1, o, 1, 1, 0, CE30_WH);
+			pointcloud_rotate ((m3f32 *)e, xt, x2, CE30_WH);
+		}
 		// Label points within a pointcloud sector (0, a, b)
 		//     POINTCLOUD SECTOR
 		//  0     a   r    b    n

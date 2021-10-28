@@ -178,12 +178,12 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
 
 struct fodpca
 {
-	v3f32 o;
-	m3f32 c;
-	v3f32 e[3];
-	float w[3];
-	float elevation;
-	float roll;
+	v3f32 o; // Offset from origin
+	m3f32 c; // Coveriance matrix
+	v3f32 e[3]; // Eigen vectors
+	float w[3]; // Eigen values
+	float elevation; // TODO: Remove this
+	float roll; // TODO: Remove this
 };
 
 
@@ -214,15 +214,13 @@ static uint32_t select_pca_points (v3f32 const x[], uint32_t n, v3f32 const * c,
 
 
 
-
-
-// PCA will produce: orientation (e), centroid (o), variance (w) of subcloud (x1).
-// o : Centroid of subcloud (x1). i.e. subcloud offset (o) from origin (0,0,0).
-// c : 3x3 coveriance matrix of subcloud (x1). Contains orientation and variance.
-// e : Three eigen column vectors (Shortest, Medium, Farthest) of coveriance matrix (c). Contains only orientation.
-// w : Three eigen values (Shortest, Medium, Farthest) of coveriance matrix (c). Contains variance.
 static void calculate_pca (struct fodpca * pca, v3f32 * x1, uint32_t m, float k)
 {
+	// PCA will produce: orientation (e), centroid (o), variance (w) of subcloud (x1).
+	// o : Centroid of subcloud (x1). i.e. subcloud offset (o) from origin (0,0,0).
+	// c : 3x3 coveriance matrix of subcloud (x1). Contains orientation and variance.
+	// e : Three eigen column vectors (Shortest, Medium, Farthest) of coveriance matrix (c). Contains only orientation.
+	// w : Three eigen values (Shortest, Medium, Farthest) of coveriance matrix (c). Contains variance.
 	v3f32 * o = &(pca->o);
 	m3f32 * c = &(pca->c);
 	v3f32 * e = pca->e;
