@@ -15,8 +15,7 @@
 #include "csc/csc_xlog.h"
 
 #include "../shared/ce30.h"
-
-#include "mg_send.h"
+#include "../shared/mg_send.h"
 
 #include "detection2.h"
 #include "graphics.h"
@@ -42,13 +41,10 @@ struct
 
 void loop_stdin (struct graphics * g, struct fodcontext * fod, FILE * f)
 {
-	fodcontext_read (fod, f);
-	detection_input (g, fod, 1.0f);
-
 	while (1)
 	{
 		fodcontext_read (fod, f);
-		detection_input (g, fod, 0.1f);
+		detection_input (g, fod);
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
 }
@@ -58,15 +54,18 @@ void loop_stdin (struct graphics * g, struct fodcontext * fod, FILE * f)
 void loop_file (struct graphics * g, struct fodcontext * fod, FILE * f)
 {
 	fodcontext_read (fod, f);
-	detection_input (g, fod, 1.0f);
-	fodcontext_read (fod, f);
-	detection_input (g, fod, 1.0f);
+	for (int i = 0; i < 1000; ++i)
+	{
+		detection_input (g, fod);
+	}
 	int c = '\n';
 	while (1)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
 		fodcontext_read (fod, f);
-		detection_input (g, fod, 0.01f);
+		detection_input (g, fod);
+		graphics_draw_pointcloud_alpha (g, CE30_WH, fod->pc_input, fod->pc_alpha);
+		graphics_flush (g);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 		if (c == 'q'){return;}
@@ -124,7 +123,10 @@ int main (int argc, char const * argv[])
 	graphics_init (&g, mainarg.address);
 
 
-	struct fodcontext * fod = calloc (1, sizeof(struct fodcontext));
+	struct fodcontext * fod = fodcontext_init();
+
+
+
 
 	FILE * f = NULL;
 	if (mainarg.filename)

@@ -15,9 +15,9 @@
 
 #include "misc.h"
 
-#include "mg_attr.h"
-#include "mg_comp.h"
-#include "mg_send.h"
+#include "../shared/mg_attr.h"
+#include "../shared/mg_comp.h"
+#include "../shared/mg_send.h"
 #include "myent.h"
 
 #include "pointcloud.h"
@@ -128,6 +128,7 @@ static void graphics_flush (struct graphics * g)
 	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_COUNT, &(component_count){g->points.count}, sizeof(component_count));
 	mg_send_set (sock, MYENT_DRAW_LINES, MG_COUNT, &(component_count){g->lines.count}, sizeof(component_count));
 	*/
+	//printf ("flush %i %i\n", g->points.last, g->lines.last);
 	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_POS, g->points.pos, sizeof(v4f32)*g->points.last);
 	mg_send_set (sock, MYENT_DRAW_CLOUD, MG_POINTCLOUD_COL, g->points.col, sizeof(u8rgba)*g->points.last);
 	mg_send_set (sock, MYENT_DRAW_LINES, MG_LINES_POS, g->lines.pos, sizeof(v4f32)*g->lines.last);
@@ -228,6 +229,7 @@ static void graphics_draw_pointcloud_cid (struct graphics * g, uint32_t n, v3f32
 
 static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f32 const x[], float const a[])
 {
+	//printf ("Draw\n");
 	uint32_t last = g->points.last;
 	v4f32 * pos = g->points.pos + last;
 	u8rgba * col = g->points.col + last;

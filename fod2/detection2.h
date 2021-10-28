@@ -23,29 +23,43 @@
 #include "../shared/ce30.h"
 
 
-static void detection_input (struct graphics * g, struct fodcontext * fod, float k)
+static void detection_input (struct graphics * g, struct fodcontext * fod)
 {
-	//Rename
-	v3f32 * x0 = fod->pc_x0;
-	v3f32 * x1 = fod->pc_x1;
-	v3f32 * xd = fod->pc_xd;
-	float * alpha = fod->pc_alpha;
-	uint8_t * cid = fod->cid;
+	float p = 0.02f;
+	float k = 2.5f * 2.5f;
 
-	//Reset
-	//memset (cid, 0, sizeof(uint8_t)*CE30_WH);
+	v3f32 const * x = fod->pc_input;
+	v3f32 * u = fod->pc_mean;
+	v3f32 * d = fod->pc_delta;
+	float * v = fod->pc_variance;
+	float  * l2 = fod->pc_length2;
 
-	//Calculate position delta (xd = x1 - x0)
-	v3f32_subv (xd, x1, x0, 1, 1, 1, CE30_WH);
-	memcpy (x0, x1, sizeof(v3f32) * CE30_WH);
 
 	for(int32_t i = 0; i < CE30_WH; ++i)
 	{
-		float v = v3f32_norm2(xd + i) * 40000.0f;
-		alpha[i] = (alpha[i] * (1.0f - k)) + (v * k);
+		if (CE30_POINT_IS_UNDEFINED(x[i])){continue;}
+		if ((l2[i] / v[i]) < k)
+		{
+			v3f32_add_mul (u + i, x + i, u + i, p, 1.0f - p); // u[t] = kx + (1-k)u[t-1]
+		}
+		v[i] = f32_lerp2 (v[i], l2[i], p); // v[t] = kd + (1-k)v[t-1]
+		v3f32_sub (d + i, x + i, u + i);
+		l2[i] = v3f32_norm2 (d + i);
 	}
-	graphics_draw_pointcloud_alpha (g, CE30_WH, x1, alpha);
-	graphics_flush (g);
+	//v3f32_subv (d, x, u, 1, 1, 1, CE30_WH);
+	//v3f32_dotv (l2, d, d, 1, 1, CE30_WH);
+
+
+	float * alpha = fod->pc_alpha;
+	for(int32_t i = 0; i < CE30_WH; ++i)
+	{
+		alpha[i] = (l2[i] / v[i]) > k ? 255 : 0;
+		//alpha[i] = sqrtf (l2[i] / v[i]) * 255.0f;
+		//alpha[i] = sqrtf(v[i]) * 255.0f;
+		//alpha[i] = sqrtf(u[i]);
+	}
+
+
 }
 
 
