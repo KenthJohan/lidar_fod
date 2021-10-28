@@ -231,8 +231,8 @@ static void calculate_pca (struct fodpca * pca, v3f32 * x1, uint32_t m, float k)
 	pointcloud_covariance (x1, m, c, k);
 	pointcloud_eigen (c, e, w);
 	//https://stackoverflow.com/questions/2782647/how-to-get-yaw-pitch-and-roll-from-a-3d-vector
-	pca->elevation = atan2(e[0].x, e[0].z);
-	pca->roll = asin(-e[0].y);
+	//pca->elevation = atan2(e[0].x, e[0].z);
+	//pca->roll = asin(-e[0].y);
 }
 
 
