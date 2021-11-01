@@ -13,8 +13,8 @@ DEFINES += NNG_STATIC_LIB
 DEFINES += IMPLEMENT_PROBE
 SOURCES += probe/probe.c
 
-DEFINES += IMPLEMENT_MILOMQTT
-SOURCES += milo/milomqtt.c
+#DEFINES += IMPLEMENT_MILOMQTT
+#SOURCES += milo/milomqtt.c
 
 QMAKE_CFLAGS += -Wno-unused-function
 QMAKE_CFLAGS += -Wno-unused-parameter
@@ -51,6 +51,7 @@ INCLUDEPATH += C:/msys64/mingw64/include
 
 LIBS += -LC:/msys64/mingw64/lib
 
+LIBS += -Wl,-Bdynamic
 LIBS += -lmosquitto
 
 LIBS += -Wl,-Bstatic
