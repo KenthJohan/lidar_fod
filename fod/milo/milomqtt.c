@@ -79,6 +79,7 @@ void milomqtt_init (char const * host, int port, int keepalive)
 
 	if (global_mosq != NULL)
 	{
+		XLOG (XLOG_INF, XLOG_GENERAL, "mosquitto_connect: %s:%i %i\n", host, port, keepalive);
 		int rc = mosquitto_connect (global_mosq, host, port, keepalive);
 		ASSERTF (rc == MOSQ_ERR_SUCCESS, "mosquitto_connect %s %i %i: %s", host, port, keepalive, mosquitto_strerror (rc));
 		if (rc != MOSQ_ERR_SUCCESS)
