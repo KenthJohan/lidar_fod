@@ -13,8 +13,8 @@ DEFINES += NNG_STATIC_LIB
 DEFINES += IMPLEMENT_PROBE
 SOURCES += probe/probe.c
 
-#DEFINES += IMPLEMENT_MILOMQTT
-#SOURCES += milo/milomqtt.c
+DEFINES += IMPLEMENT_MILOMQTT
+SOURCES += milo/milomqtt.c
 
 QMAKE_CFLAGS += -Wno-unused-function
 QMAKE_CFLAGS += -Wno-unused-parameter

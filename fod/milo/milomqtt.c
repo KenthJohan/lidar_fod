@@ -2,7 +2,11 @@
 #include "milomqtt.h"
 
 
-
+#define TOPIC_TRACKER_ID "/command/c2h/lidarfod/obj/id"
+#define TOPIC_TRACKER_H "/command/c2h/lidarfod/obj/h"
+#define TOPIC_TRACKER_X "/command/c2h/lidarfod/obj/x"
+#define TOPIC_TRACKER_Y "/command/c2h/lidarfod/obj/y"
+#define TOPIC_TRACKER_Z "/command/c2h/lidarfod/obj/z"
 
 static void publish_float (struct mosquitto *mosq, int qos, char const * topic, float number)
 {
@@ -55,6 +59,10 @@ static void on_publish (struct mosquitto *mosq, void *obj, int mid)
 	//printf ("Message with mid %d has been published.\n", mid);
 }
 
+
+
+
+
 void milomqtt_init (char const * host, int port, int keepalive)
 {
 	ASSERT_PARAM_NOTNULL (host);
@@ -82,7 +90,7 @@ void milomqtt_init (char const * host, int port, int keepalive)
 	}
 
 	{
-		int rc = mosquitto_loop_start(global_mosq);
+		int rc = mosquitto_loop_start (global_mosq);
 		ASSERTF (rc == MOSQ_ERR_SUCCESS, "mosquitto_loop_start: %s", mosquitto_strerror (rc));
 		if (rc != MOSQ_ERR_SUCCESS)
 		{
@@ -95,8 +103,7 @@ void milomqtt_init (char const * host, int port, int keepalive)
 }
 
 
-
-
+// Send important data from fodcontext to Milo ATV.
 void milomqtt_send (struct fodcontext * fod)
 {
 	int qos = 0;
@@ -104,11 +111,11 @@ void milomqtt_send (struct fodcontext * fod)
 	{
 		if (fod->tracker.r[i] != FLT_MAX)
 		{
-			publish_int (global_mosq, qos, "/command/c2h/lidarfod/obj/id", i);
-			publish_float (global_mosq, qos, "/command/c2h/lidarfod/obj/h", fod->tracker.h[i]);
-			publish_float (global_mosq, qos, "/command/c2h/lidarfod/obj/x", fod->tracker.x[i].x);
-			publish_float (global_mosq, qos, "/command/c2h/lidarfod/obj/y", fod->tracker.x[i].y);
-			publish_float (global_mosq, qos, "/command/c2h/lidarfod/obj/z", fod->tracker.x[i].z);
+			publish_int (global_mosq, qos, TOPIC_TRACKER_ID, i);
+			publish_float (global_mosq, qos, TOPIC_TRACKER_H, fod->tracker.h[i]);
+			publish_float (global_mosq, qos, TOPIC_TRACKER_X, fod->tracker.x[i].x);
+			publish_float (global_mosq, qos, TOPIC_TRACKER_Y, fod->tracker.x[i].y);
+			publish_float (global_mosq, qos, TOPIC_TRACKER_Z, fod->tracker.x[i].z);
 		}
 	}
 }
