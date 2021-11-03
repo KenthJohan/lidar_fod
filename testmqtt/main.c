@@ -54,7 +54,7 @@ void milomqtt_sendloop (struct mosquitto *mosq)
 	int qos = 0;
 	while(1)
 	{
-		usleep(1000);
+		usleep(100000);
 		i++;
 		publish_int(mosq, qos, "/command/c2h/lidar/dummy", i);
 	}
