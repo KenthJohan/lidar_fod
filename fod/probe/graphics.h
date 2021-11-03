@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 
-#include "csc/csc_debug_nng.h"
 #include "csc/csc_math.h"
 #include "csc/csc_linmat.h"
 #include "csc/csc_m3f32.h"

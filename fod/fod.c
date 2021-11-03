@@ -2,20 +2,14 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include <nng/nng.h>
-#include <nng/protocol/pair0/pair.h>
-#include <nng/supplemental/util/platform.h>
 
-#include "csc/csc_debug_nng.h"
+
 #include "csc/csc_crossos.h"
 #include "csc/csc_malloc_file.h"
 #include "csc/csc_filecopy.h"
 #include "csc/csc_argv.h"
 #include "csc/csc_assert.h"
 #include "csc/csc_xlog.h"
-#include "csc/csc_crossos.h"
-#include "csc/csc_malloc_file.h"
-#include "csc/csc_filecopy.h"
 #include "csc/csc_math.h"
 
 #include "../shared/ce30.h"
