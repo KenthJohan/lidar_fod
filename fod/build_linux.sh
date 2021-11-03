@@ -1,4 +1,4 @@
-gcc -ofod_milomqtt fod.c flecs.c probe/probe.c \
+gcc -ofod_milomqtt fod.c flecs.c milo/milomqtt.c \
 -DIMPLEMENT_MILOMQTT \
 -I. \
 -latomic \
