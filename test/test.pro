@@ -4,30 +4,15 @@ CONFIG -= app_bundle
 CONFIG -= qt
 CONFIG += static
 
+DEFINES += __USE_MINGW_ANSI_STDIO=1
 DEFINES += USING_QT_CREATOR
 DEFINES += NNG_STATIC_LIB
 
 QMAKE_CFLAGS += -Wno-unused-function
 
 SOURCES += test.c
-HEADERS += calculation.h
-HEADERS += myent.h
-HEADERS += mathmisc.h
-HEADERS += skitrack.h
-HEADERS += skitrack2.h
-HEADERS += mg_comp.h
-HEADERS += mg_attr.h
-HEADERS += ../shared/shared.h
-HEADERS += ../shared/log.h
+SOURCES += flecs.c
 
-HEADERS += csc/csc_math.h
-HEADERS += csc/csc_linmat.h
-HEADERS += csc/csc_m3f32.h
-HEADERS += csc/csc_m3f32_print.h
-HEADERS += csc/csc_m4f32.h
-HEADERS += csc/csc_v3f32.h
-HEADERS += csc/csc_v3f32_print.h
-HEADERS += csc/csc_qf32.h
 
 
 INCLUDEPATH += C:/msys64/mingw64/include
