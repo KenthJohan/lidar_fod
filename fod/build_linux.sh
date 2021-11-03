@@ -1,4 +1,4 @@
-gcc -ofod_probe fod.c probe/probe.c \
+gcc -ofod_probe fod.c flecs.c probe/probe.c \
 -DIMPLEMENT_PROBE \
 -I. \
 -DNNG_STATIC_LIB \
@@ -10,14 +10,13 @@ gcc -ofod_probe fod.c probe/probe.c \
 -lm \
 -lpthread
 
-gcc -ofod_milomqtt fod.c milo/milomqtt.c \
+gcc -ofod_milomqtt fod.c flecs.c milo/milomqtt.c \
 -DIMPLEMENT_MILOMQTT \
 -I. \
--DNNG_STATIC_LIB \
--lnng \
 -latomic \
 -llapacke \
 -llapack \
 -lblas \
 -lm \
--lpthread
+-lpthread \
+-lmosquitto
