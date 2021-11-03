@@ -20,12 +20,9 @@ gcc -ofod_milomqtt fod.c flecs.c milo/milomqtt.c \
 #-lpthread \
 #-lmosquitto
 
-gcc -ofod_probe fod.c flecs.c milo/milomqtt.c probe/probe.c \
+gcc -ofod_probe fod.c flecs.c probe/probe.c \
 -DIMPLEMENT_PROBE \
--DIMPLEMENT_MILOMQTT \
 -I. \
--DNNG_STATIC_LIB \
--lnng \
 -latomic \
 -llapacke \
 -llapack \
