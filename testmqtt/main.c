@@ -1,6 +1,8 @@
 #include <mosquitto.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define MOSQ_CHECK_RC(mosq, rc) mosq_checkerror(__FILE__, __LINE__, (mosq), (rc))
 static void mosq_checkerror(char const * filename, int line, struct mosquitto *mosq, int rc)
