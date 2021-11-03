@@ -237,7 +237,7 @@ static void detection_input (ecs_world_t *world, struct fodcontext * fod)
 					n++;
 				}
 			}
-			printf ("n: %i %i %i\n", c, c+r, n);
+			//printf ("n: %i %i %i\n", c, c+r, n);
 			fod->proximity[s] = n;
 			c += CE30_WH / PROX_SECTOR_COUNT;
 		}
