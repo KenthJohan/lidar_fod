@@ -20,9 +20,11 @@
 
 #include "../shared/ce30.h"
 
+#include "components.h"
 #include "misc.h"
 #include "detection.h"
 #include "fodcontext.h"
+#include "flecs.h"
 
 #include "probe/probe.h"
 #include "milo/milomqtt.h"
@@ -66,7 +68,7 @@ static void fodcontext_read (struct fodcontext * fod, FILE * f)
 }
 
 
-void loop_stdin (struct fodcontext * fod, FILE * f)
+void loop_stdin (ecs_world_t *world, struct fodcontext * fod, FILE * f)
 {
 	while (1)
 	{
@@ -80,7 +82,7 @@ void loop_stdin (struct fodcontext * fod, FILE * f)
 
 
 
-void loop_file (struct fodcontext * fod, FILE * f)
+void loop_file (ecs_world_t *world, struct fodcontext * fod, FILE * f)
 {
 	int c = '\n';
 	while (1)
@@ -89,6 +91,7 @@ void loop_file (struct fodcontext * fod, FILE * f)
 		fodcontext_read (fod, f);
 		detection_input (fod);
 		milomqtt_send (fod);
+		ecs_progress(world, 0.0f);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 		if (c == 'q'){return;}
@@ -117,6 +120,11 @@ int main (int argc, char const * argv[])
 	setbuf(stdout, NULL);
 	csc_crossos_enable_ansi_color();
 
+	ecs_world_t *world = ecs_init_w_args(argc, (char **)argv);
+	ecs_set(world, EcsWorld, EcsRest, {0});
+	ECS_META_COMPONENT(world, Position);
+	ECS_META_COMPONENT(world, Velocity);
+
 	mainarg.address = "tcp://localhost:9002";
 	mainarg.filename = NULL;
 	mainarg.flags = 0;
@@ -140,8 +148,6 @@ int main (int argc, char const * argv[])
 	{'F', "frame",           CSC_TYPE_U32,    &mainarg.frame,         0,                   "The starting frame"},
 	{'d', "duration",        CSC_TYPE_U32,    &mainarg.usleep,        0,                   "Duration for each frame"},
 	{CSC_ARGV_END}};
-
-
 
 	csc_argv_parseall (argv+1, option);
 
@@ -180,12 +186,12 @@ int main (int argc, char const * argv[])
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from STDIN");
 		//printf ("[INFO] Reading from STDIN\n");
-		loop_stdin (fodctx, f);
+		loop_stdin (world, fodctx, f);
 	}
 	else if (f != NULL)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from file %s", mainarg.filename);
-		loop_file (fodctx, f);
+		loop_file (world, fodctx, f);
 	}
 	else
 	{

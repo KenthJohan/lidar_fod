@@ -1,26 +1,28 @@
+# -f "../ce30_clouds/ce30_pointcloud.out" -c
+# -f "../ce30_clouds/ce30_pointcloud.out" -c
+
+
 TEMPLATE = app
 CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 #CONFIG += static
 
-DEFINES += USING_QT_CREATOR
-# -f "../ce30_clouds/ce30_pointcloud.out" -c
-# -f "../ce30_clouds/ce30_pointcloud.out" -c
-
-DEFINES += NNG_STATIC_LIB
-
-DEFINES += IMPLEMENT_PROBE
-SOURCES += probe/probe.c
-
-DEFINES += IMPLEMENT_MILOMQTT
-SOURCES += milo/milomqtt.c
-
 QMAKE_CFLAGS += -Wno-unused-function
 QMAKE_CFLAGS += -Wno-unused-parameter
 
+DEFINES += USING_QT_CREATOR
+DEFINES += NNG_STATIC_LIB
+DEFINES += IMPLEMENT_PROBE
+DEFINES += IMPLEMENT_MILOMQTT
+
+
+SOURCES += probe/probe.c
+SOURCES += milo/milomqtt.c
+SOURCES += flecs.c
 SOURCES += fod.c
 
+HEADERS += flecs.h
 HEADERS += myent.h
 HEADERS += misc.h
 HEADERS += detection.h

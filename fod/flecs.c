@@ -25681,7 +25681,7 @@ void FlecsCoreDocImport(
 
 #ifdef FLECS_HTTP
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) | defined(__MINGW32__)
 #pragma comment(lib, "Ws2_32.lib")
 #include <WinSock2.h>
 #include <Ws2tcpip.h>
@@ -25842,7 +25842,7 @@ static
 void http_close(
     ecs_http_socket_t sock)
 {
-#ifdef _MSC_VER
+#if defined(_MSC_VER) | defined(__MINGW32__)
     closesocket(sock);
 #else
     shutdown(sock, SHUT_RDWR);
@@ -26288,7 +26288,7 @@ int accept_connections(
     const struct sockaddr* addr, 
     ecs_size_t addr_len) 
 {
-#ifdef _MSC_VER
+#if defined(_MSC_VER) | defined(__MINGW32__)
     /* If on Windows, test if winsock needs to be initialized */
     SOCKET testsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (SOCKET_ERROR == testsocket && WSANOTINITIALISED == WSAGetLastError()) {
@@ -26486,7 +26486,7 @@ ecs_http_server_t* ecs_http_server_init(
     srv->connections = flecs_sparse_new(ecs_http_connection_impl_t);
     srv->requests = flecs_sparse_new(ecs_http_request_impl_t);
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) & !defined(__MINGW32__)
     /* Ignore pipe signal. SIGPIPE can occur when a message is sent to a client
      * but te client already disconnected. */
     signal(SIGPIPE, SIG_IGN);
