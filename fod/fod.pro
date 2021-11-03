@@ -23,6 +23,7 @@ SOURCES += flecs.c
 SOURCES += fod.c
 
 HEADERS += flecs.h
+HEADERS += components.h
 HEADERS += myent.h
 HEADERS += misc.h
 HEADERS += detection.h

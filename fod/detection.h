@@ -15,6 +15,8 @@
 
 #include "../shared/ce30.h"
 
+#include "components.h"
+#include "flecs.h"
 #include "misc.h"
 #include "tracker.h"
 #include "fodcontext.h"
@@ -23,8 +25,7 @@
 #define DECTECT_FAILED 0
 #define DECTECT_SUCCESS 1
 
-static uint32_t detection_sample
-(struct fodcontext * fod)
+static uint32_t detection_sample (ecs_world_t *world, struct fodcontext * fod)
 {
 	if ((fod->pc_tags[fod->sample_index] & CE30_POINT_GOOD) == 0)
 	{
@@ -208,9 +209,11 @@ static uint32_t detection_sample
 
 
 
-static void detection_input (struct fodcontext * fod)
+static void detection_input (ecs_world_t *world, struct fodcontext * fod)
 {
+	ASSERT_PARAM_NOTNULL (world);
 	ASSERT_PARAM_NOTNULL (fod);
+
 	v3f32 * x = fod->pc_x1;
 	memset (&fod->pca_sample, 0, sizeof (struct fodpca));
 	memset (&fod->pca_cluster, 0, sizeof (struct fodpca));
@@ -254,7 +257,7 @@ static void detection_input (struct fodcontext * fod)
 	if ((fod->flags & FOD_PROXIMITY_ALERT) != FOD_PROXIMITY_ALERT)
 	{
 		fod->sample_index = rand() % CE30_WH;
-		detection_sample (fod);
+		detection_sample (world, fod);
 	}
 	probe_fodcontext (fod, x);
 
@@ -271,7 +274,7 @@ static void detection_input (struct fodcontext * fod)
 				//printf ("Recheck tracker %i\n", i);
 				int32_t spread = (rand() % (TRACKER_RESCAN_RADIUS*2)) - TRACKER_RESCAN_RADIUS;
 				fod->sample_index = CLAMP(fod->tracker.i[i] + spread, 0, CE30_WH);
-				detection_sample (fod);
+				detection_sample (world, fod);
 				//graphics_flush (g);
 			}
 		}
@@ -281,6 +284,42 @@ static void detection_input (struct fodcontext * fod)
 
 	probe_flush ();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

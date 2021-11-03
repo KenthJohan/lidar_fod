@@ -12,3 +12,9 @@ float x;
 float y;
 float z;
 });
+
+
+ECS_STRUCT(Tracker, {
+float h;
+});
+

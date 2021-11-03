@@ -73,7 +73,7 @@ void loop_stdin (ecs_world_t *world, struct fodcontext * fod, FILE * f)
 	while (1)
 	{
 		fodcontext_read (fod, f);
-		detection_input (fod);
+		detection_input (world, fod);
 		milomqtt_send (fod);
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
@@ -89,7 +89,7 @@ void loop_file (ecs_world_t *world, struct fodcontext * fod, FILE * f)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
 		fodcontext_read (fod, f);
-		detection_input (fod);
+		detection_input (world, fod);
 		milomqtt_send (fod);
 		ecs_progress(world, 0.0f);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
