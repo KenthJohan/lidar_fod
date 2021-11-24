@@ -75,14 +75,7 @@ static uint32_t poitracker_update1 (float h[], float r[], v3f32 y[], uint32_t co
 
 
 
-struct poitracker
-{
-	uint32_t count;//Not used currently
-	float r[TRACKER_CAPACITY];//Radius
-	v3f32 x[TRACKER_CAPACITY];//Position
-	float h[TRACKER_CAPACITY];//History
-	uint32_t i[TRACKER_CAPACITY];//Pointcloud Index
-};
+
 
 static void poitracker_init (struct poitracker * tracker)
 {

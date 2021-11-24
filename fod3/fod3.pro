@@ -13,14 +13,12 @@ QMAKE_CFLAGS += -Wno-unused-parameter
 
 DEFINES += USING_QT_CREATOR
 DEFINES += NNG_STATIC_LIB
-DEFINES += IMPLEMENT_PROBE
-DEFINES += IMPLEMENT_MILOMQTT
 
 
 SOURCES += probe/probe.c
-SOURCES += milo/milomqtt.c
+SOURCES += milo/milomqtt_dummy.c
 SOURCES += flecs.c
-SOURCES += fod.c
+SOURCES += fod3.c
 
 HEADERS += flecs.h
 HEADERS += components.h

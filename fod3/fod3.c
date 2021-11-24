@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <inttypes.h>
-
+#include <flecs.h>
 
 
 #include "csc/csc_crossos.h"
@@ -14,11 +14,7 @@
 
 #include "../shared/ce30.h"
 
-#include "components.h"
-#include "misc.h"
-#include "detection.h"
 #include "fodcontext.h"
-#include "flecs.h"
 
 #include "probe/probe.h"
 #include "milo/milomqtt.h"
@@ -50,24 +46,16 @@ struct
 
 
 
-static void fodcontext_read (struct fodcontext * fod, FILE * f)
-{
-	ASSERT_PARAM_NOTNULL (fod);
-	ASSERT_PARAM_NOTNULL (f);
-	memset (fod->pc_tags, 0, sizeof(uint8_t)*CE30_WH);
-	// Read 5 frames from CE30 LiDAR because it updates pointcloud per 5 frame.
-	ce30_read (f, fod->pc_src, 5);
-	ce30_xyzw_to_pos_amp_flags (fod->pc_src, fod->pc_x1, fod->pc_amplitude1, fod->pc_tags);
-	ce30_detect_incidence_edges (fod->pc_tags);
-}
+
 
 
 void loop_stdin (ecs_world_t *world, struct fodcontext * fod, FILE * f)
 {
 	while (1)
 	{
-		fodcontext_read (fod, f);
-		detection_input (world, fod);
+		v4f32 xyzw[CE30_WH];
+		ce30_read (f, xyzw, 5);
+		fodcontext_input (fod, xyzw);
 		milomqtt_send (fod);
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 	}
@@ -82,8 +70,9 @@ void loop_file (ecs_world_t *world, struct fodcontext * fod, FILE * f)
 	while (1)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Frame %i", ce30_ftell(f));
-		fodcontext_read (fod, f);
-		detection_input (world, fod);
+		v4f32 xyzw[CE30_WH];
+		ce30_read (f, xyzw, 5);
+		fodcontext_input (fod, xyzw);
 		milomqtt_send (fod);
 		ecs_progress(world, 0.0f);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
@@ -94,14 +83,7 @@ void loop_file (ecs_world_t *world, struct fodcontext * fod, FILE * f)
 
 
 
-struct fodcontext * fodcontext_create()
-{
-	struct fodcontext * fodctx = calloc (1, sizeof (struct fodcontext));
-	fodctx->sample_mean_variance = 1.0f; //This is dotproduct result. 1.0 == 0 deg
-	fodctx->sample_normal = (v3f32){{0.0f, 0.0f, 1.0f}};
-	poitracker_init (&fodctx->tracker);
-	return fodctx;
-}
+
 
 
 
@@ -116,8 +98,6 @@ int main (int argc, char const * argv[])
 
 	ecs_world_t *world = ecs_init_w_args(argc, (char **)argv);
 	ecs_set(world, EcsWorld, EcsRest, {0});
-	ECS_META_COMPONENT(world, Position);
-	ECS_META_COMPONENT(world, Velocity);
 
 	mainarg.address = "tcp://localhost:9002";
 	mainarg.filename = NULL;
