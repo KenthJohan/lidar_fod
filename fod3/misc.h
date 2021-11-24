@@ -22,6 +22,7 @@
 #include "csc/csc_v4f32.h"
 #include "csc/csc_m3f32.h"
 #include "../shared/ce30.h"
+#include "types.h"
 
 
 
@@ -130,15 +131,7 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
 
 
 
-struct fodpca
-{
-	v3f32 o; // Offset from origin
-	m3f32 c; // Coveriance matrix
-	v3f32 e[3]; // Eigen vectors
-	float w[3]; // Eigen values
-	float elevation; // TODO: Remove this
-	float roll; // TODO: Remove this
-};
+
 
 
 
