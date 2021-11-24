@@ -7,3 +7,6 @@
 [submodule "fod_delta/csc"]
 	path = fod_delta/csc
 	url = https://github.com/KenthJohan/csc
+[submodule "fod3/csc"]
+	path = fod3/csc
+	url = https://github.com/KenthJohan/csc
