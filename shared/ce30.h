@@ -39,11 +39,11 @@ static uint32_t ce30_ftell(FILE * f)
 	return t;
 }
 
-static void ce30_read (FILE * f, v4f32 xyzqw[CE30_WH], uint32_t n)
+static void ce30_read (FILE * f, v4f32 xyzw[CE30_WH], uint32_t n)
 {
 	for (uint32_t i = 0; i < n; ++i)
 	{
-		int r = fread (xyzqw, sizeof(v4f32)*CE30_WH, 1, f);
+		int r = fread (xyzw, sizeof(v4f32)*CE30_WH, 1, f);
 		ASSERTF (r == 1, "fread %i", r);
 	}
 }
