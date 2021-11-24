@@ -16,7 +16,7 @@ void probe_fodcontext (struct fodcontext * fod)
 {
 	graphics_draw_pca (&probe_graphics, fod->pca.e, fod->pca.w, &(fod->pca.o), 2.0f, 2.0f, 2.0f);
 	graphics_draw_pointcloud_cid (&probe_graphics, CE30_WH, fod->x1, fod->tags);
-	graphics_draw_pointcloud_cid (&probe_graphics, CE30_WH, fod->x2, fod->tags);
+	//graphics_draw_pointcloud_cid (&probe_graphics, CE30_WH, fod->x2, fod->tags);
 }
 
 
