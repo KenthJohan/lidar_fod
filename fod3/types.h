@@ -35,8 +35,8 @@
 
 struct fodpca
 {
-	v3f32 o; // Offset from origin
-	m3f32 c; // Coveriance matrix
+	v3f32 o; // Offset from origin. Centroid. Mean. 3 vector.
+	m3f32 c; // Coveriance matrix. 3x3 matrix
 	v3f32 e[3]; // Eigen vectors
 	float w[3]; // Eigen values
 };
@@ -45,10 +45,11 @@ struct fodcontext
 {
 	v3f32 x1[CE30_WH];
 	v3f32 x2[CE30_WH];
+	float calib[CE30_WH];
 	float a1[CE30_WH];
 	uint8_t tags[CE30_WH];
 
-	struct fodpca pca;
+	struct fodpca ground_pca;
 };
 
 

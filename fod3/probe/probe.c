@@ -23,6 +23,16 @@ void probe_pointcloud (v3f32 x[], uint8_t tags[], uint32_t xn)
 	graphics_draw_pointcloud_cid (&probe_graphics, xn, x, tags);
 }
 
+void probe_pointcloud_alpha (v3f32 x[], float const a[], uint32_t xn, float k)
+{
+	graphics_draw_pointcloud_alpha (&probe_graphics, xn, x, a, k);
+}
+
+void probe_pointcloud_pn (v3f32 x[], float const a[], uint32_t xn, float k)
+{
+	graphics_draw_pointcloud_pn (&probe_graphics, xn, x, a, k);
+}
+
 void probe_fodcontext (struct fodcontext * fod)
 {
 	//graphics_draw_pca (&probe_graphics, fod->pca.e, fod->pca.w, &(fod->pca.o), 2.0f, 2.0f, 2.0f);

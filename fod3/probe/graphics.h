@@ -181,6 +181,11 @@ static void graphics_init (nng_socket sock)
 
 static u8rgba graphics_cid (uint8_t tag)
 {
+	if (tag & CE30_POINT_ABOVE)
+	{
+		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0x66, .a = 0xFF};
+	}
+
 	if (tag & CE30_POINT_EDGE)
 	{
 		return (u8rgba) {.r = 0xFF, .g = 0xB8, .b = 0xFD, .a = 0xFF};
@@ -189,11 +194,6 @@ static u8rgba graphics_cid (uint8_t tag)
 	if (tag & CE30_POINT_GROUND)
 	{
 		return (u8rgba) {.r = 0x8e, .g = 0x8f, .b = 0x72, .a = 0xFF};
-	}
-
-	if (tag & CE30_POINT_ABOVE)
-	{
-		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0x66, .a = 0xFF};
 	}
 
 	if (tag & CE30_POINT_EDGEFILL)
@@ -233,7 +233,7 @@ static void graphics_draw_pointcloud_cid (struct graphics * g, uint32_t n, v3f32
 }
 
 
-static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f32 const x[], float const a[])
+static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f32 const x[], float const a[], float k)
 {
 	uint32_t last = g->points.last;
 	v4f32 * pos = g->points.pos + last;
@@ -242,7 +242,7 @@ static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f
 	for (uint32_t i = 0; i < n; ++i)
 	{
 		float w;
-		w = CLAMP(a[i] * 4.0f, 0.0f, 255.0f);
+		w = CLAMP(a[i] * k, 0.0f, 255.0f);
 		col[i].r = (uint8_t)(w);
 		col[i].g = (uint8_t)(w);
 		col[i].b = (uint8_t)(w);
@@ -255,7 +255,36 @@ static void graphics_draw_pointcloud_alpha (struct graphics * g, uint32_t n, v3f
 }
 
 
-
+static void graphics_draw_pointcloud_pn (struct graphics * g, uint32_t n, v3f32 const x[], float const a[], float k)
+{
+	uint32_t last = g->points.last;
+	v4f32 * pos = g->points.pos + last;
+	u8rgba * col = g->points.col + last;
+	graphicverts_reserve (&g->points, n);
+	for (uint32_t i = 0; i < n; ++i)
+	{
+		uint8_t f = 50;
+		float w = a[i] * k;
+		w = CLAMP(w, -127.0f, 127.0f) + 127.0f;
+		if(w < 0.0f)
+		{
+			col[i].r = (uint8_t)(w);
+			col[i].g = f;
+			col[i].b = f;
+		}
+		else if(w > 0.0f)
+		{
+			col[i].r = f;
+			col[i].g = (uint8_t)(w);
+			col[i].b = f;
+		}
+		col[i].a = 0xFF;
+		pos[i].w = 10.0f;
+		pos[i].x = x[i].x;
+		pos[i].y = x[i].y;
+		pos[i].z = x[i].z;
+	}
+}
 
 
 
