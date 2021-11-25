@@ -3,14 +3,6 @@
 #include "../shared/ce30.h"
 
 
-// Stupid:
-#ifndef FLT_MAX
-#define FLT_MAX __FLT_MAX__
-#endif
-#ifndef DBL_EPSILON
-#define DBL_EPSILON __DBL_EPSILON__
-#endif
-
 
 // Sample configurations:
 #define MIN_POINTS_IN_LIDAR 1000
