@@ -17,10 +17,8 @@ DEFINES += NNG_STATIC_LIB
 
 SOURCES += probe/probe.c
 SOURCES += milo/milomqtt_dummy.c
-SOURCES += flecs.c
 SOURCES += fod3.c
 
-HEADERS += flecs.h
 HEADERS += components.h
 HEADERS += myent.h
 HEADERS += misc.h

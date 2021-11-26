@@ -50,6 +50,10 @@ struct fodcontext
 	uint8_t tags[CE30_WH];
 
 	struct fodpca ground_pca;
+
+
+	uint32_t num_above;
+	uint32_t num_above_tot;
 };
 
 

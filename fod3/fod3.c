@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <inttypes.h>
-#include <flecs.h>
 
 
 #include "csc/csc_crossos.h"
@@ -49,7 +48,7 @@ struct
 
 
 
-void loop_stdin (ecs_world_t *world, struct fodcontext * fod, FILE * f)
+void loop_stdin (struct fodcontext * fod, FILE * f)
 {
 	while (1)
 	{
@@ -64,7 +63,7 @@ void loop_stdin (ecs_world_t *world, struct fodcontext * fod, FILE * f)
 
 
 
-void loop_file (ecs_world_t *world, struct fodcontext * fod, FILE * f)
+void loop_file (struct fodcontext * fod, FILE * f)
 {
 	int c = '\n';
 	while (1)
@@ -74,7 +73,6 @@ void loop_file (ecs_world_t *world, struct fodcontext * fod, FILE * f)
 		ce30_read (f, xyzw, 5);
 		fodcontext_input (fod, xyzw);
 		milomqtt_send (fod);
-		ecs_progress(world, 0.0f);
 		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 		if (c == 'q'){return;}
@@ -95,9 +93,6 @@ int main (int argc, char const * argv[])
 	UNUSED (argc);
 	setbuf(stdout, NULL);
 	csc_crossos_enable_ansi_color();
-
-	ecs_world_t *world = ecs_init_w_args(argc, (char **)argv);
-	ecs_set(world, EcsWorld, EcsRest, {0});
 
 	mainarg.address = "tcp://localhost:9002";
 	mainarg.filename = NULL;
@@ -160,12 +155,12 @@ int main (int argc, char const * argv[])
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from STDIN");
 		//printf ("[INFO] Reading from STDIN\n");
-		loop_stdin (world, fodctx, f);
+		loop_stdin (fodctx, f);
 	}
 	else if (f != NULL)
 	{
 		XLOG (XLOG_INF, XLOG_GENERAL, "Reading from file %s", mainarg.filename);
-		loop_file (world, fodctx, f);
+		loop_file (fodctx, f);
 	}
 	else
 	{
