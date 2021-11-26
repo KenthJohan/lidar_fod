@@ -70,10 +70,30 @@ static void calculate_RPCA(v3f32 x[], uint8_t tags[], uint32_t xn, v3f32 y[], ui
 	}
 }
 
+
+static float conv3(v3f32 x[], uint32_t u, uint32_t v, float k[])
+{
+
+	float f[9];
+	f[0] = x[CE30_XY_INDEX (u-1, v-1)].x;
+	f[1] = x[CE30_XY_INDEX (u+0, v-1)].x;
+	f[2] = x[CE30_XY_INDEX (u+1, v-1)].x;
+	f[3] = x[CE30_XY_INDEX (u-1,  v+0)].x;
+	f[4] = x[CE30_XY_INDEX (u+0,  v+0)].x;//Middle
+	f[5] = x[CE30_XY_INDEX (u+1,  v+0)].x;
+	f[6] = x[CE30_XY_INDEX (u-1, v+1)].x;
+	f[7] = x[CE30_XY_INDEX (u+0, v+1)].x;
+	f[8] = x[CE30_XY_INDEX (u+1, v+1)].x;
+
+	return vf32_dot(9, k, f);
+}
+
+
+
 // # Robust PCA over history
 // x1: Pointcloud source
 // x2: Pointcloud rectified
-static void calculate_RPCA2(v3f32 x1[], v3f32 x2[], uint8_t tags[], uint32_t xn, struct fodpca * pca, float calib[])
+static void calculate_RPCA2(v3f32 x1[], v3f32 x2[], uint8_t tags[], uint32_t xn, struct fodpca * pca, float calib[], float kernel[3*3])
 {
 	// ## Reset pointcloud rectified
 	memset (x2, 0, sizeof(v3f32)*xn);
@@ -103,13 +123,22 @@ static void calculate_RPCA2(v3f32 x1[], v3f32 x2[], uint8_t tags[], uint32_t xn,
 	// Noise level in the direction of ground normal:
 	float w = sqrtf(pca->w[0]);
 
+
+	for (uint32_t i = 0; i < xn; ++i)
+	{
+		if ((tags[i] & CE30_POINT_GOOD) == 0)
+		{
+			x2[i].x = 0.0f;
+		}
+	}
+
 	// ## LIDAR might be distorted.
 	// A plane can no be fitted perfectly to a convex or concave ground.
 	// This builds a mean ground using lowpass filter
 	// which can be used to strighten out the ground height:
 	for (uint32_t i = 0; i < xn; ++i)
 	{
-		if ((tags[i] & CE30_POINT_GOOD) == 0){continue;}
+		//if ((tags[i] & CE30_POINT_GOOD) == 0){continue;}
 		float h = x2[i].x;
 		// Find ground points:
 		if(fabs(h) < w*6.0f)
@@ -123,8 +152,20 @@ static void calculate_RPCA2(v3f32 x1[], v3f32 x2[], uint8_t tags[], uint32_t xn,
 		}
 	}
 
+	/*
+	for (uint32_t i = 0; i < xn; ++i)
+	{
+		if ((tags[i] & CE30_POINT_GOOD) == 0){continue;}
+		float h = x2[i].x;
+		float k = 0.1f;
+		//variance[i] = (k * h) + ((1.0f - k) * calib[i]);
+		//calib[i] = CLAMP(calib[i], -0.4f, 0.4f);
+	}
+	*/
+
 
 	// ## Detect points belonging to objects
+	/*
 	for (uint32_t i = 0; i < xn; ++i)
 	{
 		if ((tags[i] & CE30_POINT_GOOD) == 0){continue;}
@@ -138,12 +179,47 @@ static void calculate_RPCA2(v3f32 x1[], v3f32 x2[], uint8_t tags[], uint32_t xn,
 			calib[i] = 0.0f;
 		}
 	}
+	*/
+
+
+
+
+	for (uint32_t u = 1; u < CE30_W-1; ++u)
+	{
+		for (uint32_t v = 1; v < CE30_H-1; ++v)
+		{
+			uint32_t i = CE30_XY_INDEX(u, v);
+			float h = conv3(x2, u, v, kernel);
+			tags[i] &= ~CE30_POINT_ABOVE;
+			if (h > (w*2.0f))
+			{
+				tags[i] |= CE30_POINT_ABOVE;
+				calib[i] = 0.0f;
+			}
+		}
+	}
+
+
 }
+
+
+
+
 
 
 static struct fodcontext * fodcontext_create()
 {
 	struct fodcontext * fodctx = calloc (1, sizeof (struct fodcontext));
+
+	float kernel[9] =
+	{
+	0.5f, 0.5f, 0.5f,
+	0.5f, 1.0f, 0.5f,
+	0.5f, 0.5f, 0.5f
+	};
+	vsf32_mul (9, kernel, kernel, 1.0f/vf32_sum(9, kernel));
+	memcpy(fodctx->kernel, kernel, sizeof(kernel));
+
 	return fodctx;
 }
 
@@ -165,6 +241,32 @@ static uint32_t number_of_tag(uint8_t tags[], uint32_t n, uint8_t filter)
 }
 
 
+/*
+static void neighbor(v3f32 x[], uint8_t tags[], uint32_t xn, v3f32 * o)
+{
+	for (uint32_t i = 0; i < xn; ++i)
+	{
+		if ((tags[i] & CE30_POINT_ABOVE) == 0){continue;}
+		v3f32 d;
+		v3f32_sub (&d, x + i, o);
+		float l2 = v3f32_norm2 (&d);
+		float t = 0.2f;
+		if (l2 > (t*t)) {continue;}
+		tags[i] |= CE30_POINT_OBJ;
+	}
+}
+
+
+static void trac(v3f32 x[], uint8_t tags[], uint32_t xn, v3f32 y[], uint32_t * yn)
+{
+	for (uint32_t i = 0; i < xn; ++i)
+	{
+		if ((tags[i] & CE30_POINT_ABOVE) == 0){continue;}
+		if()
+	}
+}
+*/
+
 
 static void fodcontext_input (struct fodcontext * fod, v4f32 xyzw[CE30_WH])
 {
@@ -174,7 +276,9 @@ static void fodcontext_input (struct fodcontext * fod, v4f32 xyzw[CE30_WH])
 	ce30_detect_incidence_edges (fod->tags);
 
 	// Robust PCA over history:
-	calculate_RPCA2 (fod->x1, fod->x2, fod->tags, CE30_WH, &(fod->ground_pca), fod->calib);
+	calculate_RPCA2 (fod->x1, fod->x2, fod->tags, CE30_WH, &(fod->ground_pca), fod->calib, fod->kernel);
+
+	//trac(fod->x1, fod->tags, CE30_WH);
 
 	fod->num_above = number_of_tag(fod->tags, CE30_WH, CE30_POINT_ABOVE);
 	fod->num_above_tot += fod->num_above;

@@ -48,8 +48,15 @@ struct fodcontext
 	float calib[CE30_WH];
 	float a1[CE30_WH];
 	uint8_t tags[CE30_WH];
+	float kernel[3*3];
 
 	struct fodpca ground_pca;
+
+
+	struct
+	{
+		v3f32 x[CE30_WH];
+	} trackers;
 
 
 	uint32_t num_above;
