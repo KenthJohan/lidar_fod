@@ -92,9 +92,11 @@ static void calculate_RPCA2(v3f32 x1[], v3f32 x2[], uint8_t tags[], uint32_t xn,
 	pca->w[1] = pca1.w[1];
 	pca->w[2] = pca1.w[2];
 	// Low-pass single-pole IIR filter of coveriance(c) and centroid(o):
-	float k = 0.01f;
-	v3f32_add_mul (&(pca->o), &(pca->o), &(pca1.o), k, 1.0f - k);
-	m3f32_add_mul (&(pca->c), &(pca->c), &(pca1.c), k, 1.0f - k);
+	{
+		float k = 0.01f;
+		v3f32_add_mul (&(pca->o), &(pca->o), &(pca1.o), k, 1.0f - k);
+		m3f32_add_mul (&(pca->c), &(pca->c), &(pca1.c), k, 1.0f - k);
+	}
 
 
 	// ## Ground thickness
@@ -110,12 +112,14 @@ static void calculate_RPCA2(v3f32 x1[], v3f32 x2[], uint8_t tags[], uint32_t xn,
 		if ((tags[i] & CE30_POINT_GOOD) == 0){continue;}
 		float h = x2[i].x;
 		// Find ground points:
-		if(fabs(h) < w*3.0f)
+		if(fabs(h) < w*6.0f)
 		{
 			float k = 0.1f;
 			// Low-pass single-pole IIR filter:
 			calib[i] = (k * h) + ((1.0f - k) * calib[i]);
-			calib[i] = CLAMP(calib[i], -0.2f, 0.2f);
+			calib[i] = CLAMP(calib[i], -0.4f, 0.4f);
+			x2[i].x = x2[i].x - calib[i];
+			//variance[i] = (k * fabs(h)) + ((1.0f - k) * variance[i]);
 		}
 	}
 
@@ -125,10 +129,10 @@ static void calculate_RPCA2(v3f32 x1[], v3f32 x2[], uint8_t tags[], uint32_t xn,
 	{
 		if ((tags[i] & CE30_POINT_GOOD) == 0){continue;}
 		// Strighten out the ground height with mean ground height:
-		float h = x2[i].x - calib[i];
+		float h = x2[i].x;
 		tags[i] &= ~CE30_POINT_ABOVE;
 		// Find objects points:
-		if (h > (w*4.0f))
+		if (h > (w*3.0f))
 		{
 			tags[i] |= CE30_POINT_ABOVE;
 			calib[i] = 0.0f;
@@ -182,6 +186,7 @@ static void fodcontext_input (struct fodcontext * fod, v4f32 xyzw[CE30_WH])
 	printf("Ground:    %u\n", number_of_tag(fod->tags, CE30_WH, CE30_POINT_GROUND));
 
 	// Probe result show graphics:
+	//probe_pointcloud_alpha (fod->x2, fod->calib, CE30_WH, 10000.0f);
 	probe_pointcloud_pn (fod->x2, fod->calib, CE30_WH, 10000.0f);
 	probe_pointcloud (fod->x1, fod->tags, CE30_WH);
 	probe_pca(&fod->ground_pca);
