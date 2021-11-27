@@ -33,6 +33,25 @@ void probe_pointcloud_pn (v3f32 x[], float const a[], uint32_t xn, float k)
 	graphics_draw_pointcloud_pn (&probe_graphics, xn, x, a, k);
 }
 
+void probe_obj (v3f32 * x, uint32_t type)
+{
+	u8rgba color;
+	switch (type)
+	{
+	case PROBE_OBJ:
+		color = (u8rgba){{0xFF, 0xFF, 0x99, 0xAA}};
+		break;
+	case PROBE_OBJ1:
+		color = (u8rgba){{0xFF, 0x99, 0x99, 0xAA}};
+		break;
+	}
+	graphics_draw_obj (&probe_graphics, x, 0.05f, color);
+}
+
+
+
+
+
 void probe_fodcontext (struct fodcontext * fod)
 {
 	//graphics_draw_pca (&probe_graphics, fod->pca.e, fod->pca.w, &(fod->pca.o), 2.0f, 2.0f, 2.0f);

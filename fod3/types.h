@@ -25,7 +25,7 @@
 
 // Tracker configurations:
 #define TRACKER_RADIUS 0.15f
-#define TRACKER_CAPACITY 6
+#define TRACKER_CAPACITY 4
 #define TRACKER_HITINCREMENT 0.2f
 #define TRACKER_DISSIPATION 0.03f
 #define TRACKER_MIN_HITS_RESCAN 0.15f
@@ -41,29 +41,6 @@ struct fodpca
 	float w[3]; // Eigen values
 };
 
-struct fodcontext
-{
-	v3f32 x1[CE30_WH];
-	v3f32 x2[CE30_WH];
-	float calib[CE30_WH];
-	float a1[CE30_WH];
-	uint8_t tags[CE30_WH];
-	float kernel[3*3];
-
-	struct fodpca ground_pca;
-
-
-	struct
-	{
-		v3f32 x[CE30_WH];
-	} trackers;
-
-
-	uint32_t num_above;
-	uint32_t num_above_tot;
-};
-
-
 struct poitracker
 {
 	uint32_t count;//Not used currently
@@ -72,3 +49,28 @@ struct poitracker
 	float h[TRACKER_CAPACITY];//History
 	uint32_t i[TRACKER_CAPACITY];//Pointcloud Index
 };
+
+
+
+struct fodcontext
+{
+	v3f32 x1[CE30_WH];
+	v3f32 x2[CE30_WH];
+	float h[CE30_WH];
+	float calib[CE30_WH];
+	float a1[CE30_WH];
+	uint8_t tags[CE30_WH];
+	float kernel[3*3];
+
+	struct fodpca ground_pca;
+
+
+	struct poitracker tracker;
+
+
+	uint32_t num_above;
+	uint32_t num_above_tot;
+};
+
+
+

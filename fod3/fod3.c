@@ -73,7 +73,7 @@ void loop_file (struct fodcontext * fod, FILE * f)
 		ce30_read (f, xyzw, 5);
 		fodcontext_input (fod, xyzw);
 		milomqtt_send (fod);
-		if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
+		//if (mainarg.flags & ARG_CTRLMODE){c = getchar();}
 		if (mainarg.usleep){usleep (mainarg.usleep);}
 		if (c == 'q'){return;}
 	}
