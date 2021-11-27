@@ -25,7 +25,7 @@
 
 // Tracker configurations:
 #define TRACKER_RADIUS 0.15f
-#define TRACKER_CAPACITY 4
+#define TRACKER_CAPACITY 5
 #define TRACKER_HITINCREMENT 0.2f
 #define TRACKER_DISSIPATION 0.03f
 #define TRACKER_MIN_HITS_RESCAN 0.15f

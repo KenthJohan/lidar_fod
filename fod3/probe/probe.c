@@ -33,7 +33,7 @@ void probe_pointcloud_pn (v3f32 x[], float const a[], uint32_t xn, float k)
 	graphics_draw_pointcloud_pn (&probe_graphics, xn, x, a, k);
 }
 
-void probe_obj (v3f32 * x, uint32_t type)
+void probe_obj (v3f32 * x, uint32_t type, int i)
 {
 	u8rgba color;
 	switch (type)
@@ -46,6 +46,12 @@ void probe_obj (v3f32 * x, uint32_t type)
 		break;
 	}
 	graphics_draw_obj (&probe_graphics, x, 0.05f, color);
+	if(i >= 0 && i < MYENT_TEXT_LAST)
+	{
+		//char buf[10];
+		//snprintf (buf, 10, "%i", i);
+		//graphics_draw_text (&probe_graphics, i, x, buf);
+	}
 }
 
 

@@ -199,12 +199,12 @@ static void findobj (uint8_t tags[], v3f32 x[], uint32_t xn, v3f32 y[], uint32_t
 
 
 		uint32_t k = UINT32_MAX;
+		float l2_min = FLT_MAX;
 		for (uint32_t j = 0; j < yn; ++j)
 		{
 			if (y[j].x == 0.0f)
 			{
 				k = j;
-				yq[k] = 1;
 				continue;
 			}
 			v3f32 d;
@@ -213,9 +213,11 @@ static void findobj (uint8_t tags[], v3f32 x[], uint32_t xn, v3f32 y[], uint32_t
 			float t = 0.4f;
 			if (l2 < (t*t))
 			{
-				k = j;
-				yq[k]++;
-				break;
+				if(l2 < l2_min)
+				{
+					l2_min = l2;
+					k = j;
+				}
 			}
 		}
 
@@ -225,9 +227,12 @@ static void findobj (uint8_t tags[], v3f32 x[], uint32_t xn, v3f32 y[], uint32_t
 
 
 
-		ASSERT(yq[k]);
+		yq[k]++;
 		float b = 1.0f / yq[k];
-		v3f32_add_mul (y+k, y+k, x+i, 1.0f - b, b);
+		v3f32_add_mul (y+k, y+k, x+i, (1.0f - b), b);
+
+		// y := (1-k) y  +  k x
+		// y := (1-k) y  -  k x
 
 
 
@@ -240,11 +245,16 @@ static void findobj (uint8_t tags[], v3f32 x[], uint32_t xn, v3f32 y[], uint32_t
 			float t = 0.4f;
 			if (l2 < (t*t))
 			{
-				//printf("Collisiong %i %i %f!\n", j, k, l2);
+				//v3f32_add_mul (y+j, y+j, &d, 1.0f, b);
+				v3f32_add_mul (y+k, y+k, &d, 1.0f, -b*0.1f);
+
+				printf("Collisiong %i %i %f!\n", j, k, l2);
+				/*
 				y[k].x = 0.0f;
 				y[k].y = 0.0f;
 				y[k].z = 0.0f;
 				yq[k] = 0;
+				*/
 			}
 		}
 
@@ -258,12 +268,9 @@ static void findobj (uint8_t tags[], v3f32 x[], uint32_t xn, v3f32 y[], uint32_t
 			for(uint32_t j = 0; j < yn; ++j)
 			{
 				printf("q(%i): %i\n", j, yq[j]);
+				probe_obj (y + j, PROBE_OBJ, j);
 			}
-			probe_obj (y + 0, PROBE_OBJ);
-			probe_obj (y + 1, PROBE_OBJ);
-			probe_obj (y + 2, PROBE_OBJ);
-			probe_obj (y + 3, PROBE_OBJ);
-			probe_obj (y + k, PROBE_OBJ1);
+			probe_obj (y + k, PROBE_OBJ1, k);
 			probe_pointcloud (x, tags, xn);
 			probe_flush();
 			getchar();
@@ -352,10 +359,13 @@ static void fodcontext_input (struct fodcontext * fod, v4f32 xyzw[CE30_WH])
 	// Probe result show graphics:
 	//probe_pointcloud_alpha (fod->x2, fod->calib, CE30_WH, 10000.0f);
 
-	probe_obj (fod->tracker.x + 0, PROBE_OBJ);
-	probe_obj (fod->tracker.x + 1, PROBE_OBJ);
-	probe_obj (fod->tracker.x + 2, PROBE_OBJ);
-	probe_obj (fod->tracker.x + 3, PROBE_OBJ);
+	for (int i = 0; i < TRACKER_CAPACITY; ++i)
+	{
+		if(fod->tracker.q[i] > 0)
+		{
+			probe_obj (fod->tracker.x + i, PROBE_OBJ, i);
+		}
+	}
 	probe_pointcloud_pn (fod->x2, fod->calib, CE30_WH, 10000.0f);
 	probe_pointcloud (fod->x1, fod->tags, CE30_WH);
 	probe_pca(&fod->ground_pca);
