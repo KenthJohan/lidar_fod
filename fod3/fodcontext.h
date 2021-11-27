@@ -15,11 +15,11 @@ static void calculate_RPCA(v3f32 x[], uint8_t tags[], uint32_t xn, v3f32 y[], ui
 	// Robust PCA iterations:
 	n = 4;
 	// Changing constants for each iteration:
-	// lv: Positive inliers threshold.
+	// lp: Positive inliers threshold.
 	// ln: Negative inliers threshold.
 	// kv: Low-pass single-pole IIR filter: coveriance(c).
 	// ov: Low-pass single-pole IIR filter: centroid, offset(o).
-	float lp[4] = {+FLT_MAX,   +0.01f, +0.03f, +0.09f};
+	float lp[4] = {+FLT_MAX,   +0.00f, +0.04f, +0.08f};
 	float ln[4] = {-FLT_MAX, -FLT_MAX,  -0.1f, -0.09f};
 	float kv[4] = {    0.1f,     1.0f,   1.0f,   1.0f};
 	float ov[4] = {    0.1f,     0.5f,   1.0f,   1.0f};
@@ -248,7 +248,7 @@ static void findobj (uint8_t tags[], v3f32 x[], uint32_t xn, v3f32 y[], uint32_t
 				//v3f32_add_mul (y+j, y+j, &d, 1.0f, b);
 				v3f32_add_mul (y+k, y+k, &d, 1.0f, -b*0.1f);
 
-				printf("Collisiong %i %i %f!\n", j, k, l2);
+				//printf("Collisiong %i %i %f!\n", j, k, l2);
 				/*
 				y[k].x = 0.0f;
 				y[k].y = 0.0f;
