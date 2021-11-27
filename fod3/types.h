@@ -46,6 +46,7 @@ struct poitracker
 	uint32_t count;//Not used currently
 	float r[TRACKER_CAPACITY];//Radius
 	v3f32 x[TRACKER_CAPACITY];//Position
+	uint32_t q[TRACKER_CAPACITY];//Position
 	float h[TRACKER_CAPACITY];//History
 	uint32_t i[TRACKER_CAPACITY];//Pointcloud Index
 };

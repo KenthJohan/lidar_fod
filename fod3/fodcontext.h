@@ -189,17 +189,22 @@ static uint32_t number_of_tag (uint8_t tags[], uint32_t n, uint8_t filter)
 
 
 static char testc = 0;
-static void findobj (uint8_t tags[], v3f32 x[], uint32_t xn, v3f32 y[], uint32_t yn)
+static void findobj (uint8_t tags[], v3f32 x[], uint32_t xn, v3f32 y[], uint32_t yq[], uint32_t yn)
 {
-	uint32_t k = 0;
 	for (uint32_t i = 0; i < xn; ++i)
 	{
+		if ((tags[i] & CE30_POINT_GOOD) == 0){continue;}
 		if ((tags[i] & CE30_POINT_ABOVE) == 0){continue;}
-		for(uint32_t j = 0; j < yn; ++j)
+
+
+
+		uint32_t k = UINT32_MAX;
+		for (uint32_t j = 0; j < yn; ++j)
 		{
 			if (y[j].x == 0.0f)
 			{
 				k = j;
+				yq[k] = 1;
 				continue;
 			}
 			v3f32 d;
@@ -209,16 +214,51 @@ static void findobj (uint8_t tags[], v3f32 x[], uint32_t xn, v3f32 y[], uint32_t
 			if (l2 < (t*t))
 			{
 				k = j;
+				yq[k]++;
 				break;
 			}
 		}
 
-		//TODO: lerp this
-		y[k] = x[i];
+		if (k == UINT32_MAX) {continue;}
+
+
+
+
+
+		ASSERT(yq[k]);
+		float b = 1.0f / yq[k];
+		v3f32_add_mul (y+k, y+k, x+i, 1.0f - b, b);
+
+
+
+		for (uint32_t j = 0; j < yn; ++j)
+		{
+			if(j == k){continue;}
+			v3f32 d;
+			v3f32_sub (&d, y+j, y+k);
+			float l2 = v3f32_norm2 (&d);
+			float t = 0.4f;
+			if (l2 < (t*t))
+			{
+				//printf("Collisiong %i %i %f!\n", j, k, l2);
+				y[k].x = 0.0f;
+				y[k].y = 0.0f;
+				y[k].z = 0.0f;
+				yq[k] = 0;
+			}
+		}
+
+
+
+
 
 		//TODO: Frame 1570 tracker bug
 		if(testc == 't')
 		{
+			for(uint32_t j = 0; j < yn; ++j)
+			{
+				printf("q(%i): %i\n", j, yq[j]);
+			}
 			probe_obj (y + 0, PROBE_OBJ);
 			probe_obj (y + 1, PROBE_OBJ);
 			probe_obj (y + 2, PROBE_OBJ);
@@ -228,6 +268,13 @@ static void findobj (uint8_t tags[], v3f32 x[], uint32_t xn, v3f32 y[], uint32_t
 			probe_flush();
 			getchar();
 		}
+
+
+
+
+
+
+
 		/*
 		*/
 	}
@@ -275,6 +322,7 @@ static void fodcontext_input (struct fodcontext * fod, v4f32 xyzw[CE30_WH])
 	// Covert pointcloud to points and bightness-amplitudes, point-tags:
 	memset(fod->tags, 0, sizeof(uint8_t)*CE30_WH);
 	memset(fod->tracker.x, 0, sizeof(v3f32)*TRACKER_CAPACITY);
+	memset(fod->tracker.q, 0, sizeof(uint32_t)*TRACKER_CAPACITY);
 
 	ce30_xyzw_to_pos_amp_flags (xyzw, fod->x1, fod->a1, fod->tags);
 	ce30_detect_incidence_edges (fod->tags);
@@ -287,7 +335,7 @@ static void fodcontext_input (struct fodcontext * fod, v4f32 xyzw[CE30_WH])
 	float w = sqrtf (fod->ground_pca.w[0]);
 	thres (fod->h, fod->calib, fod->tags, CE30_WH, fod->kernel, w);
 
-	findobj (fod->tags, fod->x1, CE30_WH, fod->tracker.x, TRACKER_CAPACITY);
+	findobj (fod->tags, fod->x1, CE30_WH, fod->tracker.x, fod->tracker.q, TRACKER_CAPACITY);
 
 
 
