@@ -1,10 +1,14 @@
 #pragma once
 
 #include "csc/csc_math.h"
+#include "csc/csc_v3f32.h"
+#include "csc/csc_vf32_convolution.h"
+
+
 #include "../shared/ce30.h"
 #include "probe/probe.h"
 #include "types.h"
-#include "csc/csc_vf32_convolution.h"
+#include "misc.h"
 
 
 // # Robust PCA per frame
@@ -154,8 +158,9 @@ static void thres (float heightmap[], float calib[], uint8_t tags[], uint32_t xn
 		{
 			uint32_t i = CE30_XY_INDEX(u, v);
 			float h = conv3 (heightmap, u, v, kernel);
+			//float h = heightmap[i];
 			tags[i] &= ~CE30_POINT_ABOVE;
-			if (h > (w*2.0f))
+			if (h > (w*3.0f))
 			{
 				tags[i] |= CE30_POINT_ABOVE;
 				calib[i] = 0.0f;
@@ -313,9 +318,9 @@ static struct fodcontext * fodcontext_create()
 
 	float kernel[9] =
 	{
-	0.5f, 0.5f, 0.5f,
-	0.5f, 1.0f, 0.5f,
-	0.5f, 0.5f, 0.5f
+	1.0f, 1.0f, 1.0f,
+	1.0f, 2.0f, 1.0f,
+	1.0f, 1.0f, 1.0f
 	};
 	vsf32_mul (9, kernel, kernel, 1.0f/vf32_sum(9, kernel));
 	memcpy(fodctx->kernel, kernel, sizeof(kernel));
@@ -370,6 +375,6 @@ static void fodcontext_input (struct fodcontext * fod, v4f32 xyzw[CE30_WH])
 	probe_pointcloud (fod->x1, fod->tags, CE30_WH);
 	probe_pca(&fod->ground_pca);
 	probe_flush();
-	testc = getchar();
+	//testc = getchar();
 }
 

@@ -39,10 +39,10 @@ void probe_obj (v3f32 * x, uint32_t type, int i)
 	switch (type)
 	{
 	case PROBE_OBJ:
-		color = (u8rgba){{0xFF, 0xFF, 0x99, 0xAA}};
+		color = (u8rgba){{0xCC, 0xCC, 0x55, 0xFF}};
 		break;
 	case PROBE_OBJ1:
-		color = (u8rgba){{0xFF, 0x99, 0x99, 0xAA}};
+		color = (u8rgba){{0xCC, 0x55, 0x55, 0xFF}};
 		break;
 	}
 	graphics_draw_obj (&probe_graphics, x, 0.05f, color);
@@ -66,28 +66,6 @@ void probe_fodcontext (struct fodcontext * fod)
 }
 
 
-
-
-
-void probe_tracker (struct poitracker tracker[], v3f32 x[CE30_WH])
-{
-	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
-	{
-		char buf[10];
-		//snprintf(buf, 10, "%i:%4.2f", i, tracker->h[i]);
-		snprintf (buf, 10, "%i", i);
-		graphics_draw_obj (&probe_graphics, tracker->x + i, tracker->r[i], (u8rgba){{0xFF, 0xEE, 0x66, MIN(0xFF * tracker->h[i] * 2.0f, 0xFF)}});
-		//graphics_draw_text (g, i, tracker->x + i, buf);
-	}
-	for (uint32_t i = 0; i < TRACKER_CAPACITY; ++i)
-	{
-		if (tracker->r[i] != FLT_MAX)
-		{
-			graphics_draw_line (&probe_graphics, x + tracker->i[i], tracker->x + i, (u8rgba){{0x44, 0xAA, 0xAA, 0xFF}});
-			//graphics_draw_obj (g, x + tracker->i[i], tracker->r[i], (u8rgba){{0x00, 0x00, 0x66, 0xFF}});
-		}
-	}
-}
 
 void probe_flush()
 {

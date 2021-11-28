@@ -16,6 +16,7 @@ DEFINES += NNG_STATIC_LIB
 
 
 SOURCES += probe/probe.c
+#SOURCES += probe/probe_dummy.c
 SOURCES += milo/milomqtt_dummy.c
 SOURCES += fod3.c
 

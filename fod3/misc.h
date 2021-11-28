@@ -118,49 +118,6 @@ static void pointcloud_rotate (m3f32 const * r, v3f32 const x[], v3f32 y[], uint
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-static uint32_t select_pca_points (v3f32 const x[], uint32_t n, v3f32 const * c, v3f32 y[], float r)
-{
-	uint32_t m = 0;
-	for(uint32_t i = 0; i < n; ++i)
-	{
-		v3f32 d;
-		v3f32_sub (&d, x + i, c);
-		if (v3f32_norm2 (&d) < (r*r))
-		{
-			y[m] = x[i];
-			m++;
-		}
-	}
-	return m;
-}
-
-
-
-
-
 static void calculate_pca (struct fodpca * pca, v3f32 * x1, uint32_t m, float k, float h)
 {
 	// PCA will produce: orientation (e), centroid (o), variance (w) of subcloud (x1).

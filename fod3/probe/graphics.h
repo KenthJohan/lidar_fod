@@ -9,6 +9,7 @@
 #include "csc/csc_v3f32_print.h"
 #include "csc/csc_vu32.h"
 #include "csc/csc_rgb.h"
+#include "csc/csc_xlog.h"
 
 #include "../shared/ce30.h"
 #include "../shared/mg_attr.h"
@@ -183,27 +184,22 @@ static u8rgba graphics_cid (uint8_t tag)
 {
 	if (tag & CE30_POINT_OBJ)
 	{
-		return (u8rgba) {.r = 0xFF, .g = 0xFF, .b = 0x66, .a = 0xFF};
+		return (u8rgba) {.r = 0xEE, .g = 0xEE, .b = 0x66, .a = 0xFF};
 	}
 
 	if (tag & CE30_POINT_ABOVE)
 	{
-		return (u8rgba) {.r = 0x66, .g = 0xFF, .b = 0x66, .a = 0xFF};
+		return (u8rgba) {.r = 0x44, .g = 0xCC, .b = 0x44, .a = 0xFF};
 	}
 
 	if (tag & CE30_POINT_EDGE)
 	{
-		return (u8rgba) {.r = 0xFF, .g = 0xB8, .b = 0xFD, .a = 0xFF};
+		return (u8rgba) {.r = 0xDe, .g = 0xDf, .b = 0xB2, .a = 0xFF};
 	}
 
 	if (tag & CE30_POINT_GROUND)
 	{
 		return (u8rgba) {.r = 0x8e, .g = 0x8f, .b = 0x72, .a = 0xFF};
-	}
-
-	if (tag & CE30_POINT_EDGEFILL)
-	{
-		return (u8rgba) {.r = 0x77, .g = 0xB8, .b = 0xFD, .a = 0xFF};
 	}
 
 	if (tag & CE30_POINT_SEARCH)
