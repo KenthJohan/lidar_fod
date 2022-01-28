@@ -20,7 +20,6 @@
 #define CE30_POINT_GROUND 0x04
 #define CE30_POINT_OBJ 0x08
 #define CE30_POINT_EDGE 0x10
-#define CE30_POINT_EDGEFILL 0x20
 #define CE30_POINT_SECTOR 0x40 //This is a sector from LiDAR origin where objects can be labeled.
 #define CE30_POINT_SEARCH 0x80 //This is all points that define PCA.
 

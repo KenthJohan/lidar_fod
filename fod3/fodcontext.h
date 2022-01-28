@@ -65,13 +65,13 @@ static void calculate_RPCA(v3f32 x[], uint8_t tags[], uint32_t xn, v3f32 y[], ui
 		// Undo modification of input source:
 		v3f32_addv (x, x, &pca->o, 1, 1, 0, xn);
 
-		/*
+
 		printf("n=%i, l=(%f,%f) w0=%f\n", yn, lp[k], ln[k], pca->w[0]);
 		probe_pointcloud (x, tags, xn);
 		probe_pca(pca);
 		probe_flush();
 		getchar();
-		*/
+
 	}
 }
 
@@ -375,6 +375,6 @@ static void fodcontext_input (struct fodcontext * fod, v4f32 xyzw[CE30_WH])
 	probe_pointcloud (fod->x1, fod->tags, CE30_WH);
 	probe_pca(&fod->ground_pca);
 	probe_flush();
-	//testc = getchar();
+	testc = getchar();
 }
 
